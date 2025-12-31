@@ -1,0 +1,25 @@
+{
+  "name": "pack-do-pezin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Adult content monetization platform",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "typecheck": "pnpm -r typecheck",
+    "prisma:generate": "pnpm --filter @pack-do-pezin/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @pack-do-pezin/api prisma:migrate",
+    "prisma:studio": "pnpm --filter @pack-do-pezin/api prisma:studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.1"
+}
