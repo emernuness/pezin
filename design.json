@@ -1,0 +1,618 @@
+{
+  "meta": {
+    "name": "Fintech Dashboard - Neon Lime",
+    "fileName": "design.json",
+    "source": "Screenshot analysis",
+    "generatedAt": "2025-12-31",
+    "notes": "Design system extracted from financial dashboard UI screenshot. Brazilian Portuguese interface with BRL currency formatting.",
+    "confidence": 0.85,
+    "assumptions": [
+      "Font family appears to be Inter or similar geometric sans-serif",
+      "Exact hex values approximated from screenshot",
+      "Shadow values estimated from visual appearance"
+    ]
+  },
+  "principles": [
+    "Clean minimalism with strategic color pops",
+    "High contrast between dark and light surfaces",
+    "Neon lime accent creates visual energy and hierarchy",
+    "Card-based modular layout for scannable information",
+    "Generous white space for breathing room",
+    "Soft rounded corners for friendly, modern feel",
+    "Data visualization with smooth curves, not sharp angles",
+    "Clear typographic hierarchy for financial data",
+    "Subtle shadows for depth without heaviness",
+    "Functionality over decoration"
+  ],
+  "color": {
+    "palette": {
+      "neutrals": {
+        "white": "#FFFFFF",
+        "gray50": "#F8FAFB",
+        "gray100": "#E8EEF2",
+        "gray200": "#D1D9E0",
+        "gray300": "#B0BBC5",
+        "gray400": "#8696A6",
+        "gray500": "#5E7086",
+        "gray600": "#465364",
+        "gray700": "#2E3A48",
+        "gray800": "#1E2530",
+        "gray900": "#12171E",
+        "black": "#0A0D12"
+      },
+      "primary": {
+        "lime50": "#F7FFE5",
+        "lime100": "#EEFFCC",
+        "lime200": "#DEFF99",
+        "lime300": "#CDFF66",
+        "lime400": "#CDFF00",
+        "lime500": "#B8E600",
+        "lime600": "#99BF00",
+        "lime700": "#7A9900",
+        "lime800": "#5C7300",
+        "lime900": "#3D4D00"
+      },
+      "secondary": {
+        "dark50": "#E8EAED",
+        "dark100": "#C4C8CE",
+        "dark200": "#9EA5AF",
+        "dark300": "#78828F",
+        "dark400": "#5B6678",
+        "dark500": "#3E4A61",
+        "dark600": "#384359",
+        "dark700": "#30394C",
+        "dark800": "#282F40",
+        "dark900": "#1A1F2E"
+      },
+      "accent": {
+        "yellow": "#FFD700",
+        "orange": "#FF7A00",
+        "purple": "#8B5CF6"
+      },
+      "feedback": {
+        "success": "#22C55E",
+        "successLight": "#DCFCE7",
+        "warning": "#F59E0B",
+        "warningLight": "#FEF3C7",
+        "danger": "#EF4444",
+        "dangerLight": "#FEE2E2",
+        "info": "#3B82F6",
+        "infoLight": "#DBEAFE"
+      }
+    },
+    "semanticTokens": {
+      "bgPage": "#E8EEF2",
+      "bgSurface": "#FFFFFF",
+      "bgSurfaceElevated": "#FFFFFF",
+      "bgSurfaceDark": "#1A1F2E",
+      "bgSurfaceAccent": "#CDFF00",
+      "bgMuted": "#F8FAFB",
+      "textPrimary": "#12171E",
+      "textSecondary": "#5E7086",
+      "textMuted": "#8696A6",
+      "textOnDark": "#FFFFFF",
+      "textOnAccent": "#12171E",
+      "textAccent": "#7A9900",
+      "textPositive": "#22C55E",
+      "textNegative": "#EF4444",
+      "borderDefault": "#D1D9E0",
+      "borderSubtle": "#E8EEF2",
+      "borderFocus": "#CDFF00",
+      "borderDark": "#30394C",
+      "iconDefault": "#5E7086",
+      "iconMuted": "#8696A6",
+      "iconOnDark": "#FFFFFF",
+      "iconAccent": "#CDFF00",
+      "linkDefault": "#3B82F6",
+      "linkHover": "#2563EB",
+      "focusRing": "rgba(205, 255, 0, 0.5)"
+    },
+    "usageRules": {
+      "bgPage": "Main application background. Always use this as the base layer.",
+      "bgSurfaceDark": "Hero cards, primary CTAs, balance displays. Creates strong contrast.",
+      "bgSurfaceAccent": "Secondary highlight cards, positive metrics, income indicators.",
+      "lime400": "Primary accent. Use sparingly for maximum impact. Icons, highlights, hover states.",
+      "textPrimary": "Headlines, important numbers, primary content on light surfaces.",
+      "textSecondary": "Labels, descriptions, supporting text.",
+      "textPositive": "Positive trends, income, growth indicators.",
+      "textNegative": "Negative trends, expenses, alerts, overdue items.",
+      "states": {
+        "hover": "Lighten by 10% or add subtle shadow",
+        "active": "Darken by 5%",
+        "disabled": "Reduce opacity to 0.5",
+        "focus": "Add 2px focusRing outline with 2px offset"
+      }
+    }
+  },
+  "typography": {
+    "fontFamilies": {
+      "heading": {
+        "family": "Inter",
+        "fallback": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "assumption": true
+      },
+      "body": {
+        "family": "Inter",
+        "fallback": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "assumption": true
+      },
+      "mono": {
+        "family": "JetBrains Mono",
+        "fallback": "'SF Mono', 'Fira Code', Consolas, monospace",
+        "usage": "Currency values, data tables, code"
+      }
+    },
+    "scale": {
+      "display": { "size": "48px", "lineHeight": "1.1", "letterSpacing": "-0.02em" },
+      "h1": { "size": "36px", "lineHeight": "1.2", "letterSpacing": "-0.02em" },
+      "h2": { "size": "28px", "lineHeight": "1.25", "letterSpacing": "-0.01em" },
+      "h3": { "size": "22px", "lineHeight": "1.3", "letterSpacing": "-0.01em" },
+      "h4": { "size": "18px", "lineHeight": "1.35", "letterSpacing": "0" },
+      "h5": { "size": "16px", "lineHeight": "1.4", "letterSpacing": "0" },
+      "h6": { "size": "14px", "lineHeight": "1.4", "letterSpacing": "0.01em" },
+      "bodyLg": { "size": "18px", "lineHeight": "1.6" },
+      "body": { "size": "16px", "lineHeight": "1.5" },
+      "bodySm": { "size": "14px", "lineHeight": "1.5" },
+      "caption": { "size": "12px", "lineHeight": "1.4" },
+      "overline": { "size": "11px", "lineHeight": "1.2", "letterSpacing": "0.08em", "textTransform": "uppercase" }
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "textStyles": {
+      "heroValue": {
+        "size": "36px",
+        "weight": 700,
+        "lineHeight": "1.1",
+        "letterSpacing": "-0.02em",
+        "usage": "Primary balance/total values on dark cards"
+      },
+      "cardValue": {
+        "size": "28px",
+        "weight": 600,
+        "lineHeight": "1.2",
+        "letterSpacing": "-0.01em",
+        "usage": "Secondary monetary values on cards"
+      },
+      "sectionTitle": {
+        "size": "16px",
+        "weight": 600,
+        "lineHeight": "1.4",
+        "usage": "Card headers, section titles"
+      },
+      "label": {
+        "size": "12px",
+        "weight": 500,
+        "lineHeight": "1.4",
+        "color": "textSecondary",
+        "usage": "Category labels, input labels"
+      },
+      "smallValue": {
+        "size": "14px",
+        "weight": 600,
+        "lineHeight": "1.4",
+        "usage": "Small monetary values, table data"
+      },
+      "badgeText": {
+        "size": "11px",
+        "weight": 600,
+        "lineHeight": "1.2",
+        "usage": "Badges, chips, tags"
+      },
+      "calendarDay": {
+        "size": "14px",
+        "weight": 500,
+        "lineHeight": "1",
+        "usage": "Calendar day numbers"
+      }
+    }
+  },
+  "layoutAndSpacing": {
+    "container": {
+      "maxWidth": "1400px",
+      "padding": "24px"
+    },
+    "grid": {
+      "columns": 12,
+      "gutter": "24px",
+      "breakpoints": {
+        "sm": "640px",
+        "md": "768px",
+        "lg": "1024px",
+        "xl": "1280px",
+        "2xl": "1536px"
+      }
+    },
+    "spacingScale": {
+      "0": "0px",
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px",
+      "16": "64px",
+      "20": "80px",
+      "24": "96px"
+    },
+    "sectionPadding": {
+      "sm": "16px",
+      "md": "24px",
+      "lg": "32px"
+    },
+    "componentGaps": {
+      "tight": "8px",
+      "normal": "16px",
+      "relaxed": "24px",
+      "loose": "32px"
+    },
+    "radiusScale": {
+      "none": "0px",
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px",
+      "xl": "16px",
+      "2xl": "20px",
+      "3xl": "24px",
+      "full": "9999px"
+    }
+  },
+  "elevationAndEffects": {
+    "shadowScale": {
+      "none": "none",
+      "sm": "0 1px 2px rgba(0, 0, 0, 0.04)",
+      "md": "0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04)",
+      "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)",
+      "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04)",
+      "inner": "inset 0 2px 4px rgba(0, 0, 0, 0.04)",
+      "glow": "0 0 20px rgba(205, 255, 0, 0.3)",
+      "cardHover": "0 8px 20px -4px rgba(0, 0, 0, 0.12)"
+    },
+    "borders": {
+      "width": {
+        "thin": "1px",
+        "medium": "2px",
+        "thick": "3px"
+      },
+      "defaultColor": "#D1D9E0",
+      "subtleColor": "#E8EEF2",
+      "accentColor": "#CDFF00"
+    },
+    "blur": {
+      "sm": "4px",
+      "md": "8px",
+      "lg": "16px"
+    },
+    "glass": {
+      "light": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "backdropFilter": "blur(8px)",
+        "border": "1px solid rgba(255, 255, 255, 0.2)"
+      },
+      "dark": {
+        "background": "rgba(26, 31, 46, 0.9)",
+        "backdropFilter": "blur(8px)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)"
+      }
+    }
+  },
+  "components": {
+    "card": {
+      "default": {
+        "background": "#FFFFFF",
+        "borderRadius": "16px",
+        "padding": "20px",
+        "border": "none",
+        "shadow": "0 1px 2px rgba(0, 0, 0, 0.04)"
+      },
+      "dark": {
+        "background": "#1A1F2E",
+        "borderRadius": "16px",
+        "padding": "20px",
+        "border": "none",
+        "textColor": "#FFFFFF"
+      },
+      "accent": {
+        "background": "#CDFF00",
+        "borderRadius": "16px",
+        "padding": "20px",
+        "border": "none",
+        "textColor": "#12171E"
+      },
+      "hover": {
+        "transform": "translateY(-2px)",
+        "shadow": "0 8px 20px -4px rgba(0, 0, 0, 0.12)"
+      },
+      "sizes": {
+        "sm": { "padding": "12px", "borderRadius": "12px" },
+        "md": { "padding": "20px", "borderRadius": "16px" },
+        "lg": { "padding": "24px", "borderRadius": "20px" }
+      }
+    },
+    "categoryCard": {
+      "background": "#FFFFFF",
+      "borderRadius": "12px",
+      "padding": "16px",
+      "minWidth": "100px",
+      "iconSize": "32px",
+      "iconContainerBg": "#F8FAFB",
+      "iconContainerRadius": "8px"
+    },
+    "button": {
+      "primary": {
+        "background": "#CDFF00",
+        "color": "#12171E",
+        "borderRadius": "10px",
+        "fontWeight": 600,
+        "padding": "12px 24px",
+        "hover": { "background": "#B8E600" },
+        "active": { "background": "#99BF00" },
+        "disabled": { "opacity": 0.5, "cursor": "not-allowed" }
+      },
+      "secondary": {
+        "background": "#1A1F2E",
+        "color": "#FFFFFF",
+        "borderRadius": "10px",
+        "fontWeight": 600,
+        "padding": "12px 24px",
+        "hover": { "background": "#282F40" }
+      },
+      "ghost": {
+        "background": "transparent",
+        "color": "#5E7086",
+        "borderRadius": "10px",
+        "fontWeight": 500,
+        "padding": "12px 24px",
+        "hover": { "background": "#F8FAFB" }
+      },
+      "icon": {
+        "size": "40px",
+        "borderRadius": "10px",
+        "background": "#F8FAFB",
+        "hover": { "background": "#E8EEF2" }
+      },
+      "sizes": {
+        "sm": { "padding": "8px 16px", "fontSize": "13px" },
+        "md": { "padding": "12px 24px", "fontSize": "14px" },
+        "lg": { "padding": "16px 32px", "fontSize": "16px" }
+      }
+    },
+    "input": {
+      "height": "44px",
+      "padding": "12px 16px",
+      "borderRadius": "10px",
+      "border": "1px solid #D1D9E0",
+      "background": "#FFFFFF",
+      "fontSize": "14px",
+      "placeholder": { "color": "#8696A6" },
+      "focus": {
+        "border": "2px solid #CDFF00",
+        "outline": "none",
+        "shadow": "0 0 0 3px rgba(205, 255, 0, 0.2)"
+      },
+      "error": {
+        "border": "1px solid #EF4444",
+        "shadow": "0 0 0 3px rgba(239, 68, 68, 0.1)"
+      },
+      "disabled": {
+        "background": "#F8FAFB",
+        "color": "#8696A6",
+        "cursor": "not-allowed"
+      }
+    },
+    "select": {
+      "height": "44px",
+      "padding": "12px 16px",
+      "borderRadius": "10px",
+      "border": "1px solid #D1D9E0",
+      "background": "#FFFFFF",
+      "iconSize": "20px"
+    },
+    "badge": {
+      "padding": "4px 10px",
+      "borderRadius": "6px",
+      "fontSize": "11px",
+      "fontWeight": 600,
+      "variants": {
+        "success": { "background": "#DCFCE7", "color": "#15803D" },
+        "warning": { "background": "#FEF3C7", "color": "#B45309" },
+        "danger": { "background": "#FEE2E2", "color": "#DC2626" },
+        "info": { "background": "#DBEAFE", "color": "#1D4ED8" },
+        "neutral": { "background": "#F8FAFB", "color": "#5E7086" },
+        "accent": { "background": "#EEFFCC", "color": "#5C7300" }
+      }
+    },
+    "progressRing": {
+      "size": "48px",
+      "strokeWidth": "4px",
+      "trackColor": "#E8EEF2",
+      "fillColor": "#CDFF00",
+      "backgroundColor": "#F8FAFB",
+      "borderRadius": "full"
+    },
+    "chart": {
+      "areaFill": "rgba(205, 255, 0, 0.2)",
+      "lineStroke": "#12171E",
+      "lineStrokeWidth": "2px",
+      "gridColor": "#E8EEF2",
+      "axisColor": "#8696A6",
+      "dotSize": "6px",
+      "dotFill": "#CDFF00",
+      "dotStroke": "#1A1F2E",
+      "tooltipBg": "#1A1F2E",
+      "tooltipColor": "#FFFFFF",
+      "tooltipRadius": "8px"
+    },
+    "calendar": {
+      "headerBg": "transparent",
+      "headerColor": "#12171E",
+      "daySize": "32px",
+      "dayRadius": "8px",
+      "todayBg": "#E8EEF2",
+      "selectedBg": "#CDFF00",
+      "selectedColor": "#12171E",
+      "eventDotSize": "4px",
+      "eventDotColor": "#EF4444"
+    },
+    "creditCard": {
+      "width": "280px",
+      "height": "170px",
+      "borderRadius": "16px",
+      "background": "linear-gradient(135deg, #CDFF00 0%, #B8E600 100%)",
+      "darkBackground": "linear-gradient(135deg, #1A1F2E 0%, #282F40 100%)",
+      "padding": "20px",
+      "shadow": "0 10px 20px rgba(0, 0, 0, 0.15)"
+    },
+    "navbar": {
+      "height": "64px",
+      "background": "#FFFFFF",
+      "borderBottom": "1px solid #E8EEF2",
+      "padding": "0 24px",
+      "sticky": true,
+      "shadow": "0 1px 2px rgba(0, 0, 0, 0.04)"
+    },
+    "sidebar": {
+      "width": "260px",
+      "collapsedWidth": "72px",
+      "background": "#FFFFFF",
+      "borderRight": "1px solid #E8EEF2",
+      "itemPadding": "12px 16px",
+      "itemRadius": "10px",
+      "itemActiveBackground": "#EEFFCC",
+      "itemActiveColor": "#5C7300",
+      "itemHoverBackground": "#F8FAFB"
+    }
+  },
+  "iconography": {
+    "style": "stroke",
+    "strokeWidth": "1.5px",
+    "sizes": {
+      "xs": "14px",
+      "sm": "16px",
+      "md": "20px",
+      "lg": "24px",
+      "xl": "32px"
+    },
+    "defaultColor": "#5E7086",
+    "library": "Lucide Icons or Phosphor Icons (assumption)",
+    "assumption": true
+  },
+  "imagery": {
+    "style": "Clean product photography and minimal illustrations",
+    "treatment": {
+      "borderRadius": "12px",
+      "aspectRatios": ["16:9", "4:3", "1:1"],
+      "overlay": "Optional dark gradient for text readability"
+    },
+    "illustrations": {
+      "style": "Flat with subtle gradients",
+      "colors": "Use palette colors, especially lime accent"
+    },
+    "avatars": {
+      "sizes": ["24px", "32px", "40px", "48px", "64px"],
+      "borderRadius": "full",
+      "fallbackBg": "#E8EEF2",
+      "fallbackColor": "#5E7086"
+    },
+    "logos": {
+      "placement": "On card overlays for bank/service identification",
+      "maxHeight": "24px"
+    }
+  },
+  "motion": {
+    "durations": {
+      "instant": "0ms",
+      "fast": "150ms",
+      "normal": "250ms",
+      "slow": "400ms",
+      "slower": "600ms"
+    },
+    "easings": {
+      "default": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "easeIn": "cubic-bezier(0.4, 0, 1, 1)",
+      "easeOut": "cubic-bezier(0, 0, 0.2, 1)",
+      "easeInOut": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    "transitions": {
+      "default": "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+      "fast": "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+      "color": "color 150ms ease, background-color 150ms ease",
+      "transform": "transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "opacity": "opacity 200ms ease"
+    },
+    "hover": {
+      "cardLift": "translateY(-2px)",
+      "buttonScale": "scale(1.02)",
+      "iconRotate": "rotate(5deg)"
+    },
+    "entrance": {
+      "fadeUp": {
+        "from": { "opacity": 0, "transform": "translateY(10px)" },
+        "to": { "opacity": 1, "transform": "translateY(0)" },
+        "duration": "400ms"
+      },
+      "scaleIn": {
+        "from": { "opacity": 0, "transform": "scale(0.95)" },
+        "to": { "opacity": 1, "transform": "scale(1)" },
+        "duration": "300ms"
+      }
+    }
+  },
+  "accessibility": {
+    "minimumContrast": {
+      "normalText": "4.5:1",
+      "largeText": "3:1",
+      "uiComponents": "3:1"
+    },
+    "focusIndicator": {
+      "style": "2px solid #CDFF00",
+      "offset": "2px",
+      "borderRadius": "inherit"
+    },
+    "reducedMotion": {
+      "transition": "none",
+      "animation": "none"
+    },
+    "colorBlindSafe": {
+      "note": "Lime accent may be problematic for deuteranopia. Always pair with shape/icon indicators.",
+      "recommendation": "Use icons alongside color-based status indicators"
+    }
+  },
+  "doAndDont": {
+    "do": [
+      "Use the lime accent (#CDFF00) sparingly - it's the hero color",
+      "Maintain generous padding inside cards (min 16px)",
+      "Keep card border-radius consistent at 12-20px range",
+      "Use dark cards (#1A1F2E) for primary/hero information",
+      "Pair monetary values with clear labels",
+      "Use soft shadows, never harsh drop shadows",
+      "Keep the page background light (#E8EEF2) for contrast",
+      "Use smooth, curved charts rather than angular ones",
+      "Apply subtle hover states with lift effect",
+      "Keep typography clean with clear hierarchy",
+      "Use progress rings for percentage indicators",
+      "Group related information in card containers"
+    ],
+    "dont": [
+      "Don't use bright saturated colors outside the defined palette",
+      "Don't use sharp corners (below 8px radius)",
+      "Don't overcrowd cards - maintain breathing room",
+      "Don't use heavy borders - prefer shadows or subtle 1px borders",
+      "Don't mix many dark cards together - balance with light cards",
+      "Don't use the lime on large surfaces unless intentional accent card",
+      "Don't forget the soft gray page background",
+      "Don't use decorative elements that don't serve function",
+      "Don't create dense layouts - this style needs space",
+      "Don't use underlines for links inside the dashboard",
+      "Don't use pure black (#000) - use gray900/gray800 instead",
+      "Don't neglect the chart area gradient fill"
+    ]
+  }
+}
