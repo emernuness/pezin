@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  creator
+  consumer
+}
+
+enum PackStatus {
+  draft
+  published
+  unpublished
+  deleted
+}
+
+enum PurchaseStatus {
+  pending
+  paid
+  refunded
+}
+
+enum WithdrawalStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  displayName   String?
+  slug          String?  @unique
+  bio           String?  @db.VarChar(500)
+  profileImage  String?
+  coverImage    String?
+  birthDate     DateTime
+  userType      UserType
+  emailVerified Boolean  @default(false)
+
+  // Stripe Connect (for creators)
+  stripeAccountId String? @unique
+  stripeConnected Boolean @default(false)
+
+  // Email verification
+  verificationToken String?
+  verificationTokenExpires DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  refreshTokens RefreshToken[]
+  packs         Pack[]
+  purchases     Purchase[]
+  withdrawals   Withdrawal[]
+  downloadLogs  DownloadLog[]
+
+  @@index([email])
+  @@index([userType])
+  @@index([slug])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  // Token rotation tracking
+  rotatedFromTokenId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model Pack {
+  id          String     @id @default(cuid())
+  creatorId   String
+  creator     User       @relation(fields: [creatorId], references: [id])
+
+  title       String     @db.VarChar(100)
+  description String?    @db.VarChar(1000)
+  price       Int        // Centavos
+  status      PackStatus @default(draft)
+
+  // Timestamps
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+
+  // Relations
+  previews  PackPreview[]
+  files     PackFile[]
+  purchases Purchase[]
+
+  @@index([creatorId, status])
+  @@index([status, publishedAt])
+}
+
+model PackPreview {
+  id     String @id @default(cuid())
+  packId String
+  pack   Pack   @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  url   String
+  order Int
+
+  @@index([packId])
+}
+
+model PackFile {
+  id         String @id @default(cuid())
+  packId     String
+  pack       Pack   @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  filename   String
+  mimeType   String
+  size       Int    // Bytes
+  storageKey String // S3/R2 key
+  order      Int
+
+  // Relations
+  downloadLogs DownloadLog[]
+
+  @@index([packId])
+}
+
+model Purchase {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  packId    String
+  pack      Pack           @relation(fields: [packId], references: [id])
+  creatorId String
+
+  amount            Int // Total em centavos
+  platformFee       Int // 20% para plataforma
+  creatorEarnings   Int // 80% para criador
+
+  stripePaymentIntentId String @unique
+  status                PurchaseStatus
+
+  availableAt DateTime // +14 dias anti-fraude
+  createdAt   DateTime @default(now())
+  refundedAt  DateTime?
+
+  @@index([userId])
+  @@index([creatorId, status])
+  @@index([packId])
+  @@index([stripePaymentIntentId])
+}
+
+model Withdrawal {
+  id        String           @id @default(cuid())
+  creatorId String
+  creator   User             @relation(fields: [creatorId], references: [id])
+
+  amount         Int
+  stripePayoutId String?
+  status         WithdrawalStatus
+
+  requestedAt   DateTime  @default(now())
+  processedAt   DateTime?
+  failedAt      DateTime?
+  failureReason String?
+
+  @@index([creatorId, status])
+}
+
+// Para controle de download (RN-23: 10 downloads por arquivo por dia)
+model DownloadLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  fileId String
+  file   PackFile @relation(fields: [fileId], references: [id])
+  packId String
+
+  dateKey   String   // YYYY-MM-DD format
+  count     Int      @default(1)
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, fileId, dateKey])
+  @@index([userId, fileId, dateKey])
+}
+
+// Para idempotência de webhooks Stripe
+model StripeEvent {
+  id          String   @id // Stripe event ID
+  type        String
+  processed   Boolean  @default(false)
+  processedAt DateTime?
+  payload     String   @db.Text // JSON do evento
+
+  createdAt DateTime @default(now())
+
+  @@index([id, processed])
+}
