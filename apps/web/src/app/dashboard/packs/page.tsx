@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
-import { Edit, Plus, Trash } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
