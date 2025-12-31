@@ -10,6 +10,7 @@ import { PacksModule } from './modules/packs/packs.module';
 import { PublicModule } from './modules/public/public.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
+import { AssetsModule } from './modules/assets/assets.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -62,6 +63,7 @@ import { HealthController } from './modules/health/health.controller';
     PublicModule,
     DashboardModule,
     PurchasesModule,
+    AssetsModule,
   ],
   controllers: [HealthController],
 })

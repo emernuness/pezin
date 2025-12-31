@@ -1,9 +1,32 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class PublicService {
-  constructor(private prisma: PrismaService) {}
+  private readonly apiBaseUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {
+    // In development, use localhost API URL for serving seed assets
+    // In production, would use R2 signed URLs
+    const port = this.config.get('PORT') || 3001;
+    this.apiBaseUrl = this.config.get('API_BASE_URL') || `http://localhost:${port}`;
+  }
+
+  private transformAssetUrl(url: string | null): string | null {
+    if (!url) return null;
+
+    // If already a full URL, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // For seed data paths like "previews/preview_01.jpg", transform to API asset URL
+    return `${this.apiBaseUrl}/assets/${url}`;
+  }
 
   async findAllPacks(params: {
     page?: number;
@@ -75,8 +98,21 @@ export class PublicService {
       }),
     ]);
 
+    // Transform URLs to full asset URLs
+    const transformedPacks = packs.map((pack) => ({
+      ...pack,
+      creator: {
+        ...pack.creator,
+        profileImage: this.transformAssetUrl(pack.creator.profileImage),
+      },
+      previews: pack.previews.map((preview) => ({
+        ...preview,
+        url: this.transformAssetUrl(preview.url),
+      })),
+    }));
+
     return {
-      data: packs,
+      data: transformedPacks,
       meta: {
         total,
         page,
@@ -110,7 +146,18 @@ export class PublicService {
 
     if (!pack) throw new NotFoundException('Pack not found');
 
-    return pack;
+    // Transform URLs to full asset URLs
+    return {
+      ...pack,
+      creator: {
+        ...pack.creator,
+        profileImage: this.transformAssetUrl(pack.creator.profileImage),
+      },
+      previews: pack.previews.map((preview) => ({
+        ...preview,
+        url: this.transformAssetUrl(preview.url),
+      })),
+    };
   }
 
   async findCreatorBySlug(slug: string) {
@@ -129,6 +176,11 @@ export class PublicService {
 
     if (!creator) throw new NotFoundException('Creator not found');
 
-    return creator;
+    // Transform URLs to full asset URLs
+    return {
+      ...creator,
+      profileImage: this.transformAssetUrl(creator.profileImage),
+      coverImage: this.transformAssetUrl(creator.coverImage),
+    };
   }
 }

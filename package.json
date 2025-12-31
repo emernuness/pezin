@@ -13,6 +13,8 @@
     "prisma:generate": "pnpm --filter @pack-do-pezin/api prisma:generate",
     "prisma:migrate": "pnpm --filter @pack-do-pezin/api prisma:migrate",
     "prisma:studio": "pnpm --filter @pack-do-pezin/api prisma:studio",
+    "db:seed": "pnpm --filter @pack-do-pezin/api db:seed",
+    "db:reset": "pnpm --filter @pack-do-pezin/api prisma:reset",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"

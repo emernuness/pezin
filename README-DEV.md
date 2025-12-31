@@ -149,6 +149,38 @@ pnpm docker:logs      # docker compose logs -f
 - `GET /auth/verify-email?token=xxx` - Verificar email
 - `GET /auth/me` - Perfil do usuário (protegido)
 
+### Packs Endpoints (protegido)
+
+- `POST /packs/:id/upload-url` - Solicitar URL de upload (presigned)
+- `POST /packs/:id/files` - Confirmar upload de arquivo
+- `GET /packs/:id/files` - Listar arquivos do pack
+- `POST /packs/:packId/files/:fileId/download-url` - Solicitar URL de download
+
+### Purchases Endpoints (protegido)
+
+- `GET /me/purchases` - Listar minhas compras
+- `GET /me/purchases/:packId` - Verificar se comprei um pack
+
+### Dashboard Endpoints (protegido, apenas creators)
+
+- `GET /dashboard/stats` - Estatísticas do criador
+- `GET /dashboard/sales?limit=5` - Vendas recentes
+- `GET /dashboard/balance` - Saldo (disponível e pendente)
+- `GET /dashboard/chart?days=30` - Dados para gráfico de vendas
+
+### Stripe Endpoints (protegido)
+
+- `POST /stripe/checkout` - Criar sessão de checkout
+- `POST /stripe/connect/onboard` - Iniciar onboarding Connect (creators)
+- `GET /stripe/connect/status` - Status do Connect (creators)
+- `POST /stripe/webhook` - Webhook do Stripe (sem auth)
+
+### Public Endpoints (sem auth)
+
+- `GET /public/packs` - Listar packs publicados (com paginação e filtros)
+- `GET /public/packs/:id` - Detalhes de um pack
+- `GET /public/creators/:slug` - Perfil do criador com seus packs
+
 ### Health Check
 
 - `GET /health` - Status da API e database
@@ -170,24 +202,44 @@ pnpm docker:logs      # docker compose logs -f
 - ✅ Validação de idade (18+)
 - ✅ Validação de senha (min 8 chars, uppercase, lowercase, number)
 
-## PR-1 Checklist
+## Features Implementadas
 
+### Infraestrutura
 - [x] Monorepo pnpm configurado
 - [x] packages/shared com Zod schemas
+- [x] Docker Compose para desenvolvimento local
+- [x] Schema Prisma completo (User, Pack, Purchase, Withdrawal, DownloadLog, StripeEvent)
+
+### Backend (API)
 - [x] NestJS com Prisma, Auth module, JWT
 - [x] Refresh token rotation e revogação
-- [x] Next.js com Tailwind, shadcn/ui
+- [x] Guards e decorators (JwtAuthGuard, RolesGuard, @CurrentUser, @Roles)
+- [x] Health endpoint
+- [x] Módulo Packs (upload-url, confirmação, download com rate limit)
+- [x] Módulo Storage (integração Cloudflare R2)
+- [x] Módulo Stripe (Checkout, Connect, Webhooks)
+- [x] Módulo Purchases (listagem, verificação)
+- [x] Módulo Dashboard (stats, balance, sales, chart)
+- [x] Módulo Public (listagem de packs e creators)
+- [x] Testes unitários e E2E para auth
+
+### Frontend (Web)
+- [x] Next.js com Tailwind e shadcn/ui
+- [x] Design System Neon Lime aplicado
 - [x] Zustand auth store
 - [x] Axios interceptors para refresh automático
-- [x] Páginas de login, signup, dashboard
-- [x] Guards e decorators (JwtAuthGuard, RolesGuard, @CurrentUser, @Roles)
-- [x] Testes unitários e E2E para auth
-- [x] Docker Compose para desenvolvimento local
-- [x] Health endpoint
+- [x] Páginas: login, signup, dashboard
+- [x] Página de gerenciamento de packs (/dashboard/packs)
+- [x] Página pública de pack (/pack/[id])
+- [x] Página de perfil do criador (/c/[slug])
+- [x] Minhas compras (/me/purchases)
+- [x] Componentes: PackCard, CreatorCard, FilterBar, BuyButton, Pagination, Badge, Button
 
-## Próximos Passos (PR-2)
+## Próximos Passos
 
-- Stripe Checkout integration
-- Stripe Connect para creators
-- Webhook idempotente (checkout.session.completed, charge.refunded)
-- Purchase model com controle de duplicatas
+- [ ] Fluxo completo de onboarding Stripe Connect
+- [ ] Interface de upload de arquivos no frontend
+- [ ] Sistema de saques (Withdrawals)
+- [ ] Fluxo de verificação de email
+- [ ] CRUD completo de packs no frontend
+- [ ] Testes E2E para fluxo de compra
