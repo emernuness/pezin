@@ -1,25 +1,29 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
 
 export function FilterBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = React.useState(searchParams.get('search') || '');
-  const [sort, setSort] = React.useState(searchParams.get('sort') || 'recent');
-  const [minPrice, setMinPrice] = React.useState(searchParams.get('minPrice') || '');
-  const [maxPrice, setMaxPrice] = React.useState(searchParams.get('maxPrice') || '');
+  const [search, setSearch] = React.useState(searchParams.get("search") || "");
+  const [sort, setSort] = React.useState(searchParams.get("sort") || "recent");
+  const [minPrice, setMinPrice] = React.useState(
+    searchParams.get("minPrice") || "",
+  );
+  const [maxPrice, setMaxPrice] = React.useState(
+    searchParams.get("maxPrice") || "",
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,21 +33,23 @@ export function FilterBar() {
   const applyFilters = () => {
     const params = new URLSearchParams();
 
-    if (search) params.set('search', search);
-    if (sort && sort !== 'recent') params.set('sort', sort);
+    if (search) params.set("search", search);
+    if (sort && sort !== "recent") params.set("sort", sort);
     if (minPrice) {
       // Convert R$ to cents
-      const minCents = Math.round(parseFloat(minPrice) * 100);
-      if (!isNaN(minCents) && minCents > 0) params.set('minPrice', minCents.toString());
+      const minCents = Math.round(Number.parseFloat(minPrice) * 100);
+      if (!Number.isNaN(minCents) && minCents > 0)
+        params.set("minPrice", minCents.toString());
     }
     if (maxPrice) {
       // Convert R$ to cents
-      const maxCents = Math.round(parseFloat(maxPrice) * 100);
-      if (!isNaN(maxCents) && maxCents > 0) params.set('maxPrice', maxCents.toString());
+      const maxCents = Math.round(Number.parseFloat(maxPrice) * 100);
+      if (!Number.isNaN(maxCents) && maxCents > 0)
+        params.set("maxPrice", maxCents.toString());
     }
 
     // Reset page on filter change
-    params.set('page', '1');
+    params.set("page", "1");
 
     router.push(`/?${params.toString()}`);
   };
@@ -51,20 +57,20 @@ export function FilterBar() {
   const handleSortChange = (value: string) => {
     setSort(value);
     const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', value);
-    params.set('page', '1');
+    params.set("sort", value);
+    params.set("page", "1");
     router.push(`/?${params.toString()}`);
   };
 
   const clearFilters = () => {
-    setSearch('');
-    setMinPrice('');
-    setMaxPrice('');
-    setSort('recent');
-    router.push('/');
+    setSearch("");
+    setMinPrice("");
+    setMaxPrice("");
+    setSort("recent");
+    router.push("/");
   };
 
-  const hasActiveFilters = search || minPrice || maxPrice || sort !== 'recent';
+  const hasActiveFilters = search || minPrice || maxPrice || sort !== "recent";
 
   return (
     <div className="mb-8 space-y-4">
@@ -99,7 +105,7 @@ export function FilterBar() {
       {/* Price filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Preço:</span>
+          <span className="text-sm text-muted-foreground">Preço:</span>
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -110,7 +116,7 @@ export function FilterBar() {
               min="0"
               step="0.01"
             />
-            <span className="text-gray-400">-</span>
+            <span className="text-muted-foreground">-</span>
             <Input
               type="number"
               placeholder="Max (R$)"
@@ -120,14 +126,24 @@ export function FilterBar() {
               min="0"
               step="0.01"
             />
-            <Button type="button" variant="secondary" size="sm" onClick={applyFilters}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={applyFilters}
+            >
               Filtrar
             </Button>
           </div>
         </div>
 
         {hasActiveFilters && (
-          <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+          >
             Limpar filtros
           </Button>
         )}

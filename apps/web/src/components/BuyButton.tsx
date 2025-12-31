@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { api } from '@/services/api';
-import { useRouter, usePathname } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { api } from "@/services/api";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 interface BuyButtonProps {
   packId: string;
@@ -17,7 +17,7 @@ export function BuyButton({ packId }: BuyButtonProps) {
   const handleBuy = async () => {
     try {
       setLoading(true);
-      const { data } = await api.post('/stripe/checkout', { packId });
+      const { data } = await api.post("/stripe/checkout", { packId });
       if (data.url) {
         window.location.href = data.url;
       }
@@ -27,7 +27,7 @@ export function BuyButton({ packId }: BuyButtonProps) {
         const returnUrl = encodeURIComponent(pathname || `/pack/${packId}`);
         router.push(`/login?returnUrl=${returnUrl}`);
       } else {
-        alert('Erro ao iniciar compra. Tente novamente.');
+        alert("Erro ao iniciar compra. Tente novamente.");
       }
     } finally {
       setLoading(false);
@@ -41,7 +41,7 @@ export function BuyButton({ packId }: BuyButtonProps) {
       onClick={handleBuy}
       disabled={loading}
     >
-      {loading ? 'Processando...' : 'Comprar Agora'}
+      {loading ? "Processando..." : "Comprar Agora"}
     </Button>
   );
 }

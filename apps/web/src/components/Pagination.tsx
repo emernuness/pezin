@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -16,7 +16,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
+    params.set("page", page.toString());
     router.push(`/?${params.toString()}`);
   };
 

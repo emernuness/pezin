@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { api } from '@/services/api';
-import type { User } from '@pack-do-pezin/shared';
+import { api } from "@/services/api";
+import type { User } from "@pack-do-pezin/shared";
+import { create } from "zustand";
 
 interface AuthState {
   user: User | null;
@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
 
   login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post("/auth/login", { email, password });
     const { user, accessToken } = response.data;
     set({ user, accessToken, isAuthenticated: true, isLoading: false });
     return user;
@@ -29,21 +29,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
     set({ user: null, accessToken: null, isAuthenticated: false });
   },
 
   refreshToken: async () => {
     try {
-      const response = await api.post('/auth/refresh');
+      const response = await api.post("/auth/refresh");
       const { accessToken } = response.data;
       set({ accessToken });
     } catch {
       set({ user: null, accessToken: null, isAuthenticated: false });
-      throw new Error('Failed to refresh token');
+      throw new Error("Failed to refresh token");
     }
   },
 

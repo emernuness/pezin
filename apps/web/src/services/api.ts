@@ -1,8 +1,8 @@
-import axios from 'axios';
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuthStore } from "@/stores/auth.store";
+import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
   withCredentials: true, // Para cookies (refresh token)
 });
 
@@ -31,12 +31,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         useAuthStore.getState().logout();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
         }
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );

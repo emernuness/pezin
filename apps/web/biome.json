@@ -7,12 +7,17 @@
     "enabled": true,
     "rules": {
       "recommended": true
-    }
+    },
+    "ignore": [".next", "node_modules", "dist", "build"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 80
+    "lineWidth": 80,
+    "ignore": [".next", "node_modules", "dist", "build"]
+  },
+  "files": {
+    "ignore": [".next", "node_modules", "dist", "build"]
   }
 }

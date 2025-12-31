@@ -1,60 +1,66 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuthStore } from '@/stores/auth.store';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/stores/auth.store";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useAuthStore((state) => state.login);
   const user = useAuthStore((state) => state.user);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       const loggedUser = await login(email, password);
 
       // Check for returnUrl, otherwise redirect based on user type
-      const returnUrl = searchParams.get('returnUrl');
+      const returnUrl = searchParams.get("returnUrl");
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
         // Default redirect based on user type
-        const redirectPath = loggedUser?.userType === 'creator' ? '/dashboard' : '/';
+        const redirectPath =
+          loggedUser?.userType === "creator" ? "/dashboard" : "/";
         router.push(redirectPath);
       }
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || 'Erro ao fazer login. Tente novamente.'
-      );
+    } catch (err) {
+      // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for loose error typing
+      const message = (err as any).response?.data?.message || "Erro ao fazer login. Tente novamente.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Entrar</h1>
-          <p className="text-muted-foreground mt-2">
-            Entre na sua conta do Pack do Pezin
-          </p>
-        </div>
-
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
+        <CardDescription>Entre na sua conta do Pack do Pezin</CardDescription>
+      </CardHeader>
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -87,17 +93,31 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
-
-        <div className="text-center text-sm">
-          Não tem uma conta?{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+      </CardContent>
+      <CardFooter className="justify-center">
+        <div className="text-sm text-muted-foreground">
+          Não tem uma conta?{" "}
+          <Link
+            href="/signup"
+            className="text-primary hover:underline font-medium"
+          >
             Cadastre-se
           </Link>
         </div>
-      </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4 bg-muted">
+      <Suspense fallback={<div className="text-center">Carregando...</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

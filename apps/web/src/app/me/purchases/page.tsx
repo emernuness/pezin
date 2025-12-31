@@ -1,22 +1,35 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { api } from '@/services/api';
-import { PackCard } from '@/components/PackCard';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { PackCard } from "@/components/PackCard";
+import { Button } from "@/components/ui/button";
+import { api } from "@/services/api";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
+
+interface Purchase {
+  pack: {
+    id: string;
+    title: string;
+    price: number;
+    previews: { url: string }[];
+    creator: {
+      displayName: string;
+      slug: string;
+    };
+  };
+}
 
 export default function MyPurchasesPage() {
-  const [purchases, setPurchases] = useState<any[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const { data } = await api.get('/me/purchases');
+        const { data } = await api.get("/me/purchases");
         setPurchases(data);
       } catch (error) {
-        console.error('Error fetching purchases', error);
+        console.error("Error fetching purchases", error);
       } finally {
         setLoading(false);
       }
@@ -26,7 +39,7 @@ export default function MyPurchasesPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-muted text-muted-foreground">
         Carregando...
       </div>
     );
@@ -35,15 +48,15 @@ export default function MyPurchasesPage() {
   return (
     <main className="container mx-auto min-h-screen px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Meus Packs</h1>
+        <h1 className="text-3xl font-bold text-foreground">Meus Packs</h1>
         <Link href="/">
           <Button variant="outline">Explorar vitrine</Button>
         </Link>
       </div>
 
       {purchases.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 py-20">
-          <p className="text-lg text-gray-500">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-20 bg-muted/50">
+          <p className="text-lg text-muted-foreground">
             Você ainda não comprou nenhum pack.
           </p>
           <Link href="/" className="mt-4">
