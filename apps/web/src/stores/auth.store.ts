@@ -12,6 +12,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   setUser: (user: User | null) => void;
+  fetchMe: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -19,6 +20,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   isLoading: true,
   isAuthenticated: false,
+
+  fetchMe: async () => {
+    try {
+      const response = await api.get("/auth/me");
+      const { user } = response.data;
+      set({ user, isAuthenticated: true });
+    } catch (error) {
+      console.error("Fetch me error:", error);
+      // Don't log out here, just leave user null if fetch fails (e.g. invalid token that will be handled by interceptor)
+    }
+  },
 
   login: async (email, password) => {
     const response = await api.post("/auth/login", { email, password });

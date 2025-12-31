@@ -47,7 +47,9 @@ function LoginForm() {
       }
     } catch (err) {
       // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for loose error typing
-      const message = (err as any).response?.data?.message || "Erro ao fazer login. Tente novamente.";
+      const message =
+        (err as any).response?.data?.message ||
+        "Erro ao fazer login. Tente novamente.";
       setError(message);
     } finally {
       setLoading(false);
