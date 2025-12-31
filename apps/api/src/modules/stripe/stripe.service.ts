@@ -149,8 +149,10 @@ export class StripeService {
         signature,
         webhookSecret
       );
-    } catch (err) {
-      this.logger.error(`Webhook signature verification failed: ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        this.logger.error(`Webhook signature verification failed: ${err.message}`);
+      }
       throw new BadRequestException('Invalid webhook signature');
     }
   }

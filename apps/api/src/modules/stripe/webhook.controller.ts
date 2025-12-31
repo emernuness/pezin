@@ -81,11 +81,13 @@ export class WebhookController {
       this.logger.log(`Event ${event.id} processed successfully`);
 
       return { received: true, status: 'processed' };
-    } catch (error) {
-      this.logger.error(
-        `Failed to process event ${event.id}: ${error.message}`,
-        error.stack
-      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to process event ${event.id}: ${error.message}`,
+          error.stack
+        );
+      }
 
       // Don't mark as processed - allow retry
       throw error;

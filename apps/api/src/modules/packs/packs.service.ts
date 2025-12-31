@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
-import { PackStatus } from '@prisma/client';
 
 @Injectable()
 export class PacksService {
@@ -67,7 +66,7 @@ export class PacksService {
   async requestUploadUrl(
     packId: string,
     userId: string,
-    filename: string,
+    _filename: string,
     contentType: string,
     type: 'preview' | 'file'
   ) {
@@ -119,7 +118,7 @@ export class PacksService {
     userId: string,
     fileId: string,
     key: string,
-    filename: string,
+    _filename: string,
     mimeType: string,
     size: number,
     type: 'preview' | 'file'
@@ -140,7 +139,7 @@ export class PacksService {
     }
 
     // Check total pack size
-    const totalSize = pack.files.reduce((sum, f) => sum + f.size, 0) + size;
+    const totalSize = pack.files.reduce((sum: number, f: any) => sum + f.size, 0) + size;
     if (totalSize > this.MAX_PACK_SIZE) {
       throw new BadRequestException('Tamanho total do pack excede 500MB');
     }
@@ -167,7 +166,7 @@ export class PacksService {
       data: {
         id: fileId,
         packId,
-        filename,
+        filename: _filename,
         mimeType,
         size,
         storageKey: key,
@@ -206,7 +205,7 @@ export class PacksService {
 
     return {
       packId: pack.id,
-      files: pack.files.map((file) => ({
+      files: pack.files.map((file: any) => ({
         id: file.id,
         filename: file.filename,
         mimeType: file.mimeType,
