@@ -4,7 +4,6 @@ import {
   Get,
   Body,
   UseGuards,
-  BadRequestException,
 } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

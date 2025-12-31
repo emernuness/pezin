@@ -9,8 +9,6 @@ import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prisma: PrismaService;
-  let jwtService: JwtService;
 
   const mockPrisma = {
     user: {
@@ -32,7 +30,7 @@ describe('AuthService', () => {
 
   const mockConfigService = {
     get: vi.fn((key: string, defaultValue?: any) => {
-      const config = {
+      const config: Record<string, string> = {
         JWT_SECRET: 'test-secret',
         JWT_EXPIRES_IN: '15m',
         JWT_REFRESH_EXPIRES_IN: '7d',
@@ -61,8 +59,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prisma = module.get<PrismaService>(PrismaService);
-    jwtService = module.get<JwtService>(JwtService);
 
     vi.clearAllMocks();
   });

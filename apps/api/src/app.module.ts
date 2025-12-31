@@ -7,6 +7,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { PacksModule } from './modules/packs/packs.module';
+import { PublicModule } from './modules/public/public.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { PurchasesModule } from './modules/purchases/purchases.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -56,6 +59,9 @@ import { HealthController } from './modules/health/health.controller';
     AuthModule,
     StripeModule,
     PacksModule,
+    PublicModule,
+    DashboardModule,
+    PurchasesModule,
   ],
   controllers: [HealthController],
 })
