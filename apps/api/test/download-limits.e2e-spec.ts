@@ -139,7 +139,7 @@ describe('Download Limits (e2e)', () => {
       expect(downloadLog?.count).toBe(10);
     });
 
-    it('should block 11th download on same day', async () => {
+    it('should block 11th download on same day with 429 status', async () => {
       // Make 10 downloads
       for (let i = 0; i < 10; i++) {
         await request(app.getHttpServer())
@@ -147,14 +147,16 @@ describe('Download Limits (e2e)', () => {
           .set('Authorization', `Bearer ${accessToken}`);
       }
 
-      // 11th attempt should fail
+      // 11th attempt should fail with 429 Too Many Requests
       const response = await request(app.getHttpServer())
         .post(`/packs/${packId}/files/${fileId}/download-url`)
         .set('Authorization', `Bearer ${accessToken}`);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(429);
       expect(response.body.message).toContain('Limite diário');
       expect(response.body.message).toContain('10/dia');
+      expect(response.body.retryAfter).toBeDefined();
+      expect(response.body.retryAfter).toBeGreaterThan(0);
     });
 
     it('should reset count for new day', async () => {

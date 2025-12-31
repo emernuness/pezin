@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,9 @@ import { useAuthStore } from '@/stores/auth.store';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const login = useAuthStore((state) => state.login);
+  const user = useAuthStore((state) => state.user);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +25,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      const loggedUser = await login(email, password);
+
+      // Check for returnUrl, otherwise redirect based on user type
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        router.push(decodeURIComponent(returnUrl));
+      } else {
+        // Default redirect based on user type
+        const redirectPath = loggedUser?.userType === 'creator' ? '/dashboard' : '/';
+        router.push(redirectPath);
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.message || 'Erro ao fazer login. Tente novamente.'

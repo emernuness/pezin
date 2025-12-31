@@ -46,8 +46,17 @@ export default function PackViewerPage({ params }: PackViewerProps) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (error) {
-      alert('Erro ao gerar download. Tente novamente.');
+    } catch (error: any) {
+      if (error.response?.status === 429) {
+        const retryAfter = error.response?.data?.retryAfter;
+        const hoursLeft = retryAfter ? Math.ceil(retryAfter / 3600) : 24;
+        alert(
+          `Você atingiu o limite de 10 downloads por dia para este arquivo. ` +
+          `Tente novamente em ${hoursLeft} hora${hoursLeft > 1 ? 's' : ''}.`
+        );
+      } else {
+        alert('Erro ao gerar download. Tente novamente.');
+      }
     } finally {
       setDownloading(null);
     }

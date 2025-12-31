@@ -3,11 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
+import { json } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Create app without default body parser for webhook route handling
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    bodyParser: false, // Disable default body parser
   });
 
   const configService = app.get(ConfigService);
@@ -15,6 +18,17 @@ async function bootstrap() {
 
   app.useLogger(logger);
   app.use(cookieParser());
+
+  // Apply JSON body parser only to non-webhook routes
+  // The RawBodyMiddleware in AppModule handles /webhooks/stripe
+  app.use((req: any, res: any, next: any) => {
+    if (req.originalUrl?.startsWith('/webhooks/stripe')) {
+      // Skip JSON parsing for webhook routes - RawBodyMiddleware handles this
+      next();
+    } else {
+      json({ limit: '10mb' })(req, res, next);
+    }
+  });
 
   // Global validation pipe
   app.useGlobalPipes(

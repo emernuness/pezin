@@ -1,5 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { PublicService } from './public.service';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { publicPacksQuerySchema, PublicPacksQueryInput } from '@pack-do-pezin/shared';
 
 @Controller('public')
 export class PublicController {
@@ -7,23 +9,9 @@ export class PublicController {
 
   @Get('packs')
   findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-    @Query('minPrice') minPrice?: string,
-    @Query('maxPrice') maxPrice?: string,
-    @Query('sort') sort?: 'recent' | 'price_asc' | 'price_desc' | 'popular',
-    @Query('creatorId') creatorId?: string,
+    @Query(new ZodValidationPipe(publicPacksQuerySchema)) query: PublicPacksQueryInput,
   ) {
-    return this.publicService.findAllPacks({
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      search,
-      minPrice: minPrice ? parseInt(minPrice) : undefined,
-      maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
-      sort,
-      creatorId,
-    });
+    return this.publicService.findAllPacks(query);
   }
 
   @Get('packs/:id')

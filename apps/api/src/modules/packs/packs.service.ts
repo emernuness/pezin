@@ -4,6 +4,8 @@ import {
   ForbiddenException,
   NotFoundException,
   Logger,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -24,6 +26,7 @@ export class PacksService {
   private readonly MAX_FILES_PER_PACK = 50;
   private readonly MAX_PREVIEWS = 3;
   private readonly MIN_FILES_FOR_PUBLISH = 3;
+  private readonly DOWNLOAD_LIMIT_PER_DAY = 10;
 
   constructor(
     private prisma: PrismaService,
@@ -259,9 +262,15 @@ export class PacksService {
 
     const currentCount = downloadLog?.count || 0;
 
-    if (currentCount >= 10) {
-      throw new BadRequestException(
-        'Limite diário de downloads para este arquivo atingido (10/dia)'
+    if (currentCount >= this.DOWNLOAD_LIMIT_PER_DAY) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          message: `Limite diário de downloads para este arquivo atingido (${this.DOWNLOAD_LIMIT_PER_DAY}/dia)`,
+          error: 'Too Many Requests',
+          retryAfter: this.getSecondsUntilMidnight(),
+        },
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -300,5 +309,16 @@ export class PacksService {
     );
 
     return downloadUrl;
+  }
+
+  /**
+   * Calculate seconds until midnight (UTC) for Retry-After header
+   */
+  private getSecondsUntilMidnight(): number {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    return Math.ceil((tomorrow.getTime() - now.getTime()) / 1000);
   }
 }

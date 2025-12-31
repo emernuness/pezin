@@ -11,6 +11,13 @@ import { Request } from 'express';
 import { PacksService } from './packs.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import {
+  uploadUrlSchema,
+  confirmUploadSchema,
+  UploadUrlInput,
+  ConfirmUploadInput,
+} from '@pack-do-pezin/shared';
 
 @Controller('packs')
 @UseGuards(JwtAuthGuard)
@@ -20,12 +27,7 @@ export class PacksController {
   @Post(':id/upload-url')
   async getUploadUrl(
     @Param('id') packId: string,
-    @Body()
-    body: {
-      filename: string;
-      contentType: string;
-      type: 'preview' | 'file';
-    },
+    @Body(new ZodValidationPipe(uploadUrlSchema)) body: UploadUrlInput,
     @CurrentUser() user: any
   ) {
     return this.packsService.requestUploadUrl(
@@ -40,15 +42,7 @@ export class PacksController {
   @Post(':id/files')
   async confirmUpload(
     @Param('id') packId: string,
-    @Body()
-    body: {
-      fileId: string;
-      key: string;
-      filename: string;
-      mimeType: string;
-      size: number;
-      type: 'preview' | 'file';
-    },
+    @Body(new ZodValidationPipe(confirmUploadSchema)) body: ConfirmUploadInput,
     @CurrentUser() user: any
   ) {
     return this.packsService.confirmUpload(

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface BuyButtonProps {
   packId: string;
@@ -11,6 +11,7 @@ interface BuyButtonProps {
 
 export function BuyButton({ packId }: BuyButtonProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
   const handleBuy = async () => {
@@ -22,7 +23,9 @@ export function BuyButton({ packId }: BuyButtonProps) {
       }
     } catch (error: any) {
       if (error.response?.status === 401) {
-        router.push('/login');
+        // Preserve current URL to redirect back after login
+        const returnUrl = encodeURIComponent(pathname || `/pack/${packId}`);
+        router.push(`/login?returnUrl=${returnUrl}`);
       } else {
         alert('Erro ao iniciar compra. Tente novamente.');
       }

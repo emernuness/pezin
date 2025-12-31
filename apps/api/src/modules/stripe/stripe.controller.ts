@@ -11,6 +11,8 @@ import { RolesGuard } from '@/common/guards/roles.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { checkoutSchema, CheckoutInput } from '@pack-do-pezin/shared';
 
 @Controller('stripe')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,7 +24,7 @@ export class StripeController {
 
   @Post('checkout')
   async createCheckout(
-    @Body() body: { packId: string },
+    @Body(new ZodValidationPipe(checkoutSchema)) body: CheckoutInput,
     @CurrentUser() user: any
   ) {
     const session = await this.stripeService.createCheckoutSession(
