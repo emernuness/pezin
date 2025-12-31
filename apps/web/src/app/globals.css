@@ -4,26 +4,107 @@
 
 @layer base {
   :root {
-    --background: 232 238 242; /* #E8EEF2 - bgPage from design.json */
-    --foreground: 18 23 30; /* #12171E - textPrimary */
-    --card: 0 0 100%; /* #FFFFFF - bgSurface */
-    --card-foreground: 18 23 30;
-    --popover: 0 0 100%;
-    --popover-foreground: 18 23 30;
-    --primary: 75 100 50%; /* #CDFF00 - lime400 */
-    --primary-foreground: 18 23 30;
-    --secondary: 26 31 46; /* #1A1F2E - dark900 */
-    --secondary-foreground: 0 0 100%;
-    --muted: 248 250 251; /* #F8FAFB - bgMuted */
-    --muted-foreground: 94 112 134; /* #5E7086 - textSecondary */
-    --accent: 75 100 50%; /* #CDFF00 */
-    --accent-foreground: 18 23 30;
-    --destructive: 0 84 60%; /* #EF4444 */
-    --destructive-foreground: 0 0 100%;
-    --border: 209 217 224; /* #D1D9E0 */
-    --input: 209 217 224;
-    --ring: 75 100 50%; /* #CDFF00 with opacity */
-    --radius: 0.75rem; /* 12px */
+    /*
+      Design System: Fintech Dashboard - Neon Lime
+      Source: design.json
+    */
+
+    /* bgPage: #E8EEF2 */
+    --background: 204 23% 93%;
+    /* textPrimary: #12171E */
+    --foreground: 215 25% 9%;
+
+    /* bgSurface: #FFFFFF */
+    --card: 0 0% 100%;
+    /* textPrimary: #12171E */
+    --card-foreground: 215 25% 9%;
+
+    /* bgSurface: #FFFFFF */
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 9%;
+
+    /* lime400: #CDFF00 */
+    --primary: 72 100% 50%;
+    /* textPrimary: #12171E (Text on Accent) */
+    --primary-foreground: 215 25% 9%;
+
+    /* dark900: #1A1F2E */
+    --secondary: 225 28% 14%;
+    /* textOnDark: #FFFFFF */
+    --secondary-foreground: 0 0% 100%;
+
+    /* bgMuted: #F8FAFB */
+    --muted: 200 27% 98%;
+    /* textSecondary: #5E7086 */
+    --muted-foreground: 213 18% 45%;
+
+    /* lime400: #CDFF00 */
+    --accent: 72 100% 50%;
+    /* textPrimary: #12171E */
+    --accent-foreground: 215 25% 9%;
+
+    /* danger: #EF4444 */
+    --destructive: 0 84% 60%;
+    /* textOnDark: #FFFFFF */
+    --destructive-foreground: 0 0% 100%;
+
+    /* borderDefault: #D1D9E0 */
+    --border: 208 21% 85%;
+    /* input border: #D1D9E0 */
+    --input: 208 21% 85%;
+
+    /* lime400: #CDFF00 */
+    --ring: 72 100% 50%;
+
+    /* Radius: 16px (Card default) */
+    --radius: 1rem;
+    /* Radius Small: 10px (Buttons/Inputs) */
+    --radius-sm: 0.625rem;
+
+    /* Shadows */
+    /* sm: 0 1px 2px rgba(0, 0, 0, 0.04) */
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+    /* cardHover: 0 8px 20px -4px rgba(0, 0, 0, 0.12) */
+    --shadow-card-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+  }
+
+  .dark {
+    /* bgSurfaceDark: #1A1F2E */
+    --background: 225 28% 14%;
+    /* textOnDark: #FFFFFF */
+    --foreground: 0 0% 100%;
+
+    /* dark800: #282F40 (Approximation for card in dark mode) */
+    --card: 222 23% 20%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 222 23% 20%;
+    --popover-foreground: 0 0% 100%;
+
+    /* lime400: #CDFF00 */
+    --primary: 72 100% 50%;
+    --primary-foreground: 215 25% 9%;
+
+    /* dark700: #30394C */
+    --secondary: 221 23% 24%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* dark600: #384359 */
+    --muted: 220 23% 28%;
+    /* dark200: #9EA5AF */
+    --muted-foreground: 215 10% 65%;
+
+    --accent: 72 100% 50%;
+    --accent-foreground: 215 25% 9%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* dark500: #3E4A61 */
+    --border: 219 22% 31%;
+    --input: 219 22% 31%;
+
+    --ring: 72 100% 50%;
   }
 }
 
@@ -33,6 +114,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

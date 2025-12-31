@@ -1,8 +1,8 @@
-import React from 'react';
-import { api } from '@/services/api';
-import { PackCard } from '@/components/PackCard';
-import { FilterBar } from '@/components/FilterBar';
-import { Pagination } from '@/components/Pagination';
+import { FilterBar } from "@/components/FilterBar";
+import { PackCard } from "@/components/PackCard";
+import { Pagination } from "@/components/Pagination";
+import { api } from "@/services/api";
+import React from "react";
 
 interface HomeProps {
   searchParams: {
@@ -14,12 +14,23 @@ interface HomeProps {
   };
 }
 
-async function getPacks(params: any) {
+interface Pack {
+  id: string;
+  title: string;
+  price: number;
+  previews: { url: string }[];
+  creator: {
+    displayName: string;
+    slug: string;
+  };
+}
+
+async function getPacks(params: Record<string, string | number | undefined>) {
   try {
-    const { data } = await api.get('/public/packs', { params });
+    const { data } = await api.get("/public/packs", { params });
     return data;
   } catch (error) {
-    console.error('Failed to fetch packs', error);
+    console.error("Failed to fetch packs", error);
     return { data: [], meta: { total: 0, totalPages: 0, page: 1 } };
   }
 }
@@ -37,10 +48,10 @@ export default async function HomePage({ searchParams }: HomeProps) {
   return (
     <main className="container mx-auto min-h-screen px-4 py-8">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 md:text-5xl lg:text-6xl">
-          Descubra packs <span className="text-lime-600">exclusivos</span>
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl">
+          Descubra packs <span className="text-primary">exclusivos</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
           Apoie seus criadores favoritos e tenha acesso a conteúdos únicos.
           Simples, rápido e seguro.
         </p>
@@ -49,7 +60,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <FilterBar />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {packsData.data.map((pack: any) => (
+        {packsData.data.map((pack: Pack) => (
           <PackCard
             key={pack.id}
             id={pack.id}
@@ -63,7 +74,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
       </div>
 
       {packsData.data.length === 0 && (
-        <div className="mt-12 text-center text-gray-500">
+        <div className="mt-12 text-center text-muted-foreground">
           Nenhum pack encontrado com esses filtros.
         </div>
       )}
