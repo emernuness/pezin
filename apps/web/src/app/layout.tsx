@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const jetbrainsMono = JetBrains_Mono({
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}>
+        <SiteHeader />
         {children}
       </body>
     </html>
