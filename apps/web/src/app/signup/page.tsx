@@ -42,7 +42,13 @@ export default function SignupPage() {
       await api.post("/auth/signup", formData);
       router.push("/login");
     } catch (err) {
-      const errorData = (err as { response?: { data?: { errors?: { message: string }[]; message?: string } } }).response?.data;
+      const errorData = (
+        err as {
+          response?: {
+            data?: { errors?: { message: string }[]; message?: string };
+          };
+        }
+      ).response?.data;
       const errorMessage =
         errorData?.errors?.[0]?.message ||
         errorData?.message ||

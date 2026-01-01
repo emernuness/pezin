@@ -6,24 +6,24 @@
   :root {
     /*
       Design System: Fintech Dashboard - Neon Lime
-      Source: design.json
+      Updated for Light Surface Theme
     */
 
-    /* bgPage: #E8EEF2 */
-    --background: 204 23% 93%;
+    /* bgPage: Very Light Blue/Gray (Surface) */
+    --background: 210 40% 98%;
     /* textPrimary: #12171E */
     --foreground: 215 25% 9%;
 
-    /* bgSurface: #FFFFFF */
+    /* bgSurface: White */
     --card: 0 0% 100%;
     /* textPrimary: #12171E */
     --card-foreground: 215 25% 9%;
 
-    /* bgSurface: #FFFFFF */
+    /* bgSurface: White */
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 9%;
 
-    /* lime400: #CDFF00 */
+    /* lime400: #CDFF00 (Neon Accent) */
     --primary: 72 100% 50%;
     /* textPrimary: #12171E (Text on Accent) */
     --primary-foreground: 215 25% 9%;
@@ -33,10 +33,10 @@
     /* textOnDark: #FFFFFF */
     --secondary-foreground: 0 0% 100%;
 
-    /* bgMuted: #F8FAFB */
-    --muted: 200 27% 98%;
-    /* textSecondary: #5E7086 */
-    --muted-foreground: 213 18% 45%;
+    /* bgMuted: Slightly darker than background for secondary areas */
+    --muted: 210 20% 96%;
+    /* textSecondary: Grayish Blue */
+    --muted-foreground: 215 16% 47%;
 
     /* lime400: #CDFF00 */
     --accent: 72 100% 50%;
@@ -48,10 +48,10 @@
     /* textOnDark: #FFFFFF */
     --destructive-foreground: 0 0% 100%;
 
-    /* borderDefault: #D1D9E0 */
-    --border: 208 21% 85%;
-    /* input border: #D1D9E0 */
-    --input: 208 21% 85%;
+    /* borderDefault: Light Blue Grey */
+    --border: 214 32% 91%;
+    /* input border: Same as border */
+    --input: 214 32% 91%;
 
     /* lime400: #CDFF00 */
     --ring: 72 100% 50%;
@@ -62,10 +62,11 @@
     --radius-sm: 0.625rem;
 
     /* Shadows */
-    /* sm: 0 1px 2px rgba(0, 0, 0, 0.04) */
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
-    /* cardHover: 0 8px 20px -4px rgba(0, 0, 0, 0.12) */
-    --shadow-card-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+    /* sm: Soft shadow for cards */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    /* cardHover: Slightly elevated */
+    --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px
+      rgb(0 0 0 / 0.1);
   }
 
   .dark {
@@ -74,7 +75,7 @@
     /* textOnDark: #FFFFFF */
     --foreground: 0 0% 100%;
 
-    /* dark800: #282F40 (Approximation for card in dark mode) */
+    /* dark800: #282F40 */
     --card: 222 23% 20%;
     --card-foreground: 0 0% 100%;
 

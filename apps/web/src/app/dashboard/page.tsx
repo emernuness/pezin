@@ -5,10 +5,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth.store";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface ChartDataPoint {
   date: string;
@@ -32,52 +41,57 @@ interface DashboardStats {
   pendingBalance: number;
 }
 
-// Simple Dashboard Layout
+// Layout: Use global background
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-muted">
+    <div className="flex min-h-screen bg-background">
       <aside className="w-64 border-r border-border bg-card p-6 hidden md:block">
         <nav className="space-y-2">
           <Link href="/dashboard">
-            <Button variant="ghost" className="w-full justify-start">
+            <Button
+              variant="ghost"
+              className="w-full justify-start font-medium text-foreground"
+            >
               Visão Geral
             </Button>
           </Link>
           <Link href="/dashboard/packs">
-            <Button variant="ghost" className="w-full justify-start">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground"
+            >
               Meus Packs
             </Button>
           </Link>
         </nav>
       </aside>
-      <div className="flex-1 p-8">{children}</div>
+      <div className="flex-1 p-8 space-y-8">{children}</div>
     </div>
   );
 }
 
-// Skeleton para loading
+// Skeleton loading
 function DashboardSkeleton() {
   return (
     <DashboardLayout>
-      <Skeleton className="h-10 w-48 mb-8" />
+      <Skeleton className="h-10 w-48" />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-32 rounded-lg" />
+          <Skeleton key={i} className="h-32 rounded-2xl" />
         ))}
       </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-64 rounded-lg" />
-        <Skeleton className="h-64 rounded-lg" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Skeleton className="h-80 rounded-2xl" />
+        <Skeleton className="h-80 rounded-2xl" />
       </div>
     </DashboardLayout>
   );
 }
 
-// Tela de bloqueio para não-criadores
 function CreatorOnlyGate() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
-      <Card className="max-w-md text-center">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="max-w-md text-center border-border shadow-card">
         <CardHeader className="pb-4">
           <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
           <h1 className="text-xl font-bold text-foreground">
@@ -86,11 +100,13 @@ function CreatorOnlyGate() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Esta página é apenas para criadores de conteúdo. Se você quer vender
-            seus packs, crie uma conta como criador.
+            Esta página é apenas para criadores de conteúdo.
           </p>
           <div className="flex flex-col gap-2">
-            <Button asChild>
+            <Button
+              asChild
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               <Link href="/me/purchases">Ver minhas compras</Link>
             </Button>
             <Button asChild variant="outline">
@@ -103,39 +119,40 @@ function CreatorOnlyGate() {
   );
 }
 
-// Simple bar chart component
-function SimpleBarChart({ data }: { data: ChartDataPoint[] }) {
-  const maxAmount = Math.max(...data.map((d) => d.amount), 1);
-
-  return (
-    <div className="flex h-48 items-end gap-1">
-      {data.map((point, index) => {
-        const height = (point.amount / maxAmount) * 100;
-        const isToday = index === data.length - 1;
-
-        return (
-          <div
-            key={point.date}
-            className="group relative flex flex-1 flex-col items-center"
-          >
-            <div
-              className={`w-full rounded-t transition-all ${
-                isToday ? "bg-primary" : "bg-primary/50 hover:bg-primary/70"
-              }`}
-              style={{ height: `${Math.max(height, 2)}%` }}
-            />
-            <div className="absolute -top-8 hidden rounded bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md group-hover:block font-mono">
+// Recharts Custom Tooltip
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
+  if (active && payload && payload.length && label) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-2 shadow-sm">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col">
+            <span className="text-[0.70rem] uppercase text-muted-foreground">
+              Data
+            </span>
+            <span className="font-bold text-foreground">
+              {new Date(label).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+              })}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[0.70rem] uppercase text-muted-foreground">
+              Vendas
+            </span>
+            <span className="font-bold text-primary-foreground bg-primary px-1 rounded-sm text-xs">
               {new Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
-              }).format(point.amount / 100)}
-            </div>
+              }).format(payload[0].value / 100)}
+            </span>
           </div>
-        );
-      })}
-    </div>
-  );
-}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuthStore();
@@ -145,7 +162,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Só busca dados se for criador
     if (user?.userType !== "creator") {
       setLoading(false);
       return;
@@ -185,26 +201,15 @@ export default function DashboardPage() {
       minute: "2-digit",
     }).format(new Date(dateStr));
 
-  // Loading do auth
-  if (authLoading) {
-    return <DashboardSkeleton />;
-  }
-
-  // Proteção: apenas criadores podem acessar
-  if (user && user.userType !== "creator") {
-    return <CreatorOnlyGate />;
-  }
-
-  // Loading dos dados
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  if (authLoading) return <DashboardSkeleton />;
+  if (user && user.userType !== "creator") return <CreatorOnlyGate />;
+  if (loading) return <DashboardSkeleton />;
 
   if (!stats) {
     return (
       <DashboardLayout>
-        <div className="text-center py-12 text-muted-foreground">
-          Erro ao carregar dashboard. Tente novamente.
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          Erro ao carregar dashboard.
         </div>
       </DashboardLayout>
     );
@@ -212,128 +217,229 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <h1 className="mb-8 text-3xl font-bold text-foreground">Dashboard</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Visão geral dos seus ganhos e performance.
+          </p>
+        </div>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="p-6 pb-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              Vendas Totais
-            </p>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <p className="text-3xl font-bold text-foreground font-mono">
-              {stats.totalSales}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="p-6 pb-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              Receita Líquida
-            </p>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <p className="text-3xl font-bold text-foreground font-mono">
-              {formatCurrency(stats.totalEarnings)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="p-6 pb-2">
-            <p className="text-sm font-medium text-muted-foreground">
+        {/* Highlight Card: Saldo Disponível (Dark) */}
+        <Card className="bg-foreground text-background border-none shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <TrendingUp size={64} />
+          </div>
+          <CardHeader className="p-6 pb-2 relative z-10">
+            <p className="text-sm font-medium text-muted-foreground/80">
               Saldo Disponível
             </p>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <p className="text-3xl font-bold text-primary font-mono">
-              {formatCurrency(stats.availableBalance)}
-            </p>
+          <CardContent className="p-6 pt-0 relative z-10">
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-primary font-mono tracking-tight">
+                {formatCurrency(stats.availableBalance)}
+              </span>
+            </div>
             <Button
               size="sm"
-              className="mt-4 w-full"
+              className="mt-4 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               disabled={stats.availableBalance < 5000}
             >
               Solicitar Saque
             </Button>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* Standard Card: Receita Líquida */}
+        <Card className="shadow-sm border-border bg-card">
+          <CardHeader className="p-6 pb-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Receita Líquida
+            </p>
+          </CardHeader>
+          <CardContent className="p-6 pt-0">
+            <p className="text-3xl font-bold text-foreground font-mono tracking-tight">
+              {formatCurrency(stats.totalEarnings)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Total acumulado
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Standard Card: Vendas Totais */}
+        <Card className="shadow-sm border-border bg-card">
+          <CardHeader className="p-6 pb-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Vendas Totais
+            </p>
+          </CardHeader>
+          <CardContent className="p-6 pt-0">
+            <p className="text-3xl font-bold text-foreground font-mono tracking-tight">
+              {stats.totalSales}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">packs vendidos</p>
+          </CardContent>
+        </Card>
+
+        {/* Standard Card: Saldo Pendente */}
+        <Card className="shadow-sm border-border bg-card">
           <CardHeader className="p-6 pb-2">
             <p className="text-sm font-medium text-muted-foreground">
               Saldo Pendente
             </p>
           </CardHeader>
           <CardContent className="p-6 pt-0">
-            <p className="text-3xl font-bold text-muted-foreground font-mono">
+            <p className="text-3xl font-bold text-foreground font-mono tracking-tight opacity-60">
               {formatCurrency(stats.pendingBalance)}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500/50" />
               Liberado após 14 dias
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {/* Sales Chart */}
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-7 mt-8">
+        {/* Chart Area */}
+        <Card className="lg:col-span-4 shadow-sm border-border bg-card">
           <CardHeader>
             <h3 className="text-lg font-semibold text-foreground">
-              Vendas (Últimos 30 dias)
+              Receita (30 dias)
             </h3>
+            <p className="text-sm text-muted-foreground">
+              Acompanhe o desempenho das suas vendas diárias.
+            </p>
           </CardHeader>
-          <CardContent>
-            <div className="mt-4">
+          <CardContent className="pl-0">
+            <div className="h-[300px] w-full">
               {chartData.length > 0 ? (
-                <SimpleBarChart data={chartData} />
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={chartData}
+                    margin={{
+                      top: 10,
+                      right: 30,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="colorEarnings"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                      opacity={0.4}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) =>
+                        new Date(value).toLocaleDateString("pt-BR", {
+                          day: "numeric",
+                          month: "short",
+                        })
+                      }
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      tickMargin={10}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `R$ ${value / 100}`}
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      width={80}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorEarnings)"
+                      activeDot={{
+                        r: 6,
+                        style: { fill: "hsl(var(--primary))", strokeWidth: 0 },
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               ) : (
-                <div className="flex h-48 items-center justify-center text-muted-foreground">
-                  Nenhuma venda no periodo
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  Sem dados para exibir
                 </div>
               )}
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>
-                {chartData[0]?.date
-                  ? new Date(chartData[0].date).toLocaleDateString("pt-BR")
-                  : ""}
-              </span>
-              <span>Hoje</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Recent Activity */}
-        <Card>
+        <Card className="lg:col-span-3 shadow-sm border-border bg-card">
           <CardHeader>
             <h3 className="text-lg font-semibold text-foreground">
               Atividade Recente
             </h3>
+            <p className="text-sm text-muted-foreground">
+              Últimas 5 vendas realizadas.
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {recentSales.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground py-8 text-center">
                   Nenhuma venda recente.
                 </p>
               ) : (
                 recentSales.map((sale) => (
                   <div
                     key={sale.id}
-                    className="flex items-center justify-between border-b border-border pb-3 last:border-0"
+                    className="flex items-center justify-between"
                   >
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {sale.pack.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(sale.createdAt)}
-                      </p>
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/50 border border-border">
+                        <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none text-foreground">
+                          {sale.pack.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(sale.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-semibold text-primary font-mono">
+                    <div className="font-mono font-medium text-foreground">
                       +{formatCurrency(sale.creatorEarnings)}
-                    </p>
+                    </div>
                   </div>
                 ))
               )}
