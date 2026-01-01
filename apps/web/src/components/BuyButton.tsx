@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface BuyButtonProps {
   packId: string;
@@ -21,13 +22,14 @@ export function BuyButton({ packId }: BuyButtonProps) {
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 401) {
         // Preserve current URL to redirect back after login
         const returnUrl = encodeURIComponent(pathname || `/pack/${packId}`);
         router.push(`/login?returnUrl=${returnUrl}`);
       } else {
-        alert("Erro ao iniciar compra. Tente novamente.");
+        toast.error("Erro ao iniciar compra. Tente novamente.");
       }
     } finally {
       setLoading(false);
@@ -37,7 +39,7 @@ export function BuyButton({ packId }: BuyButtonProps) {
   return (
     <Button
       size="lg"
-      className="w-full bg-lime-400 text-lg font-bold text-gray-900 hover:bg-lime-500"
+      className="w-full text-lg font-bold"
       onClick={handleBuy}
       disabled={loading}
     >

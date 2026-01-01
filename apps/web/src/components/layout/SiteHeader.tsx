@@ -2,6 +2,7 @@
 
 import { UserNav } from "@/components/layout/UserNav";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth.store";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -26,9 +27,7 @@ export function SiteHeader() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
             {!mounted ? (
-              // Loading/SSR state - mostra nada ou skeleton para evitar layout shift drástico
-              // ou mostra botão "Entrar" por padrão
-              <div className="h-8 w-8" />
+              <Skeleton className="h-8 w-8 rounded-full" />
             ) : isAuthenticated ? (
               <UserNav />
             ) : (

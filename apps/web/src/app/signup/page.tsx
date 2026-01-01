@@ -9,16 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
+import { ShoppingBag, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -46,8 +42,7 @@ export default function SignupPage() {
       await api.post("/auth/signup", formData);
       router.push("/login");
     } catch (err) {
-      // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for loose error typing
-      const errorData = (err as any).response?.data;
+      const errorData = (err as { response?: { data?: { errors?: { message: string }[]; message?: string } } }).response?.data;
       const errorMessage =
         errorData?.errors?.[0]?.message ||
         errorData?.message ||
@@ -58,15 +53,83 @@ export default function SignupPage() {
     }
   };
 
+  const getDescription = () => {
+    return formData.userType === "creator"
+      ? "Crie sua conta e comece a monetizar seu conteúdo"
+      : "Crie sua conta e acesse conteúdos exclusivos";
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-muted">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Criar conta</CardTitle>
-          <CardDescription>Comece a monetizar seu conteúdo</CardDescription>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Radio Cards - Tipo de conta */}
+            <div className="space-y-2">
+              <Label>O que você quer fazer?</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({ ...formData, userType: "consumer" })
+                  }
+                  className={cn(
+                    "flex flex-col items-center p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    formData.userType === "consumer"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50",
+                  )}
+                >
+                  <ShoppingBag
+                    className={cn(
+                      "h-8 w-8 mb-2",
+                      formData.userType === "consumer"
+                        ? "text-primary"
+                        : "text-muted-foreground",
+                    )}
+                  />
+                  <span className="font-semibold text-foreground">
+                    Quero Comprar
+                  </span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Acesse packs exclusivos
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({ ...formData, userType: "creator" })
+                  }
+                  className={cn(
+                    "flex flex-col items-center p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    formData.userType === "creator"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50",
+                  )}
+                >
+                  <Sparkles
+                    className={cn(
+                      "h-8 w-8 mb-2",
+                      formData.userType === "creator"
+                        ? "text-primary"
+                        : "text-muted-foreground",
+                    )}
+                  />
+                  <span className="font-semibold text-foreground">
+                    Quero Vender
+                  </span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Monetize seu conteúdo
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -109,45 +172,24 @@ export default function SignupPage() {
                 }
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Você deve ter 18 anos ou mais
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="userType">Tipo de conta</Label>
-              <Select
-                value={formData.userType}
-                onValueChange={(val) =>
-                  setFormData({
-                    ...formData,
-                    userType: val as "creator" | "consumer",
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="consumer">Consumidor</SelectItem>
-                  <SelectItem value="creator">Criador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+            <div className="flex items-start space-x-2">
+              <Checkbox
                 id="acceptTerms"
                 checked={formData.acceptTerms}
-                onChange={(e) =>
-                  setFormData({ ...formData, acceptTerms: e.target.checked })
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, acceptTerms: checked === true })
                 }
-                required
-                className="rounded border-gray-300 text-primary focus:ring-ring"
               />
               <Label
                 htmlFor="acceptTerms"
-                className="font-normal cursor-pointer"
+                className="font-normal cursor-pointer text-sm leading-relaxed"
               >
-                Aceito os termos de uso e tenho 18+ anos
+                Declaro que tenho 18+ anos e aceito os termos de uso
               </Label>
             </div>
 

@@ -1,9 +1,8 @@
 import { PackCard } from "@/components/PackCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 interface CreatorProfileProps {
   params: {
@@ -48,7 +47,14 @@ export default async function CreatorPage({ params }: CreatorProfileProps) {
       </div>
 
       <div className="container mx-auto px-4">
-        <div className="relative -mt-20 mb-8 flex flex-col items-center md:items-start">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 mt-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar à vitrine
+        </Link>
+        <div className="relative -mt-16 mb-8 flex flex-col items-center md:items-start">
           <Avatar className="h-40 w-40 border-4 border-background shadow-lg">
             <AvatarImage src={creator.profileImage} />
             <AvatarFallback className="text-4xl">

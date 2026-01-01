@@ -51,7 +51,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.photoURL} alt={user?.displayName || "User"} />
+            <AvatarImage alt={user?.displayName || "User"} />
             <AvatarFallback>
               {getInitials(user?.displayName || "")}
             </AvatarFallback>
@@ -71,12 +71,14 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard" className="w-full cursor-pointer">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
-          </DropdownMenuItem>
+          {user?.userType === "creator" && (
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard" className="w-full cursor-pointer">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href="/me/purchases" className="w-full cursor-pointer">
               <ShoppingBag className="mr-2 h-4 w-4" />

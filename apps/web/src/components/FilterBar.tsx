@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,18 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import { useState } from "react";
 
 export function FilterBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = React.useState(searchParams.get("search") || "");
-  const [sort, setSort] = React.useState(searchParams.get("sort") || "recent");
-  const [minPrice, setMinPrice] = React.useState(
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [sort, setSort] = useState(searchParams.get("sort") || "recent");
+  const [minPrice, setMinPrice] = useState(
     searchParams.get("minPrice") || "",
   );
-  const [maxPrice, setMaxPrice] = React.useState(
+  const [maxPrice, setMaxPrice] = useState(
     searchParams.get("maxPrice") || "",
   );
 
@@ -107,7 +108,11 @@ export function FilterBar() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Preço:</span>
           <div className="flex items-center gap-2">
+            <Label htmlFor="minPrice" className="sr-only">
+              Preço mínimo
+            </Label>
             <Input
+              id="minPrice"
               type="number"
               placeholder="Min (R$)"
               value={minPrice}
@@ -116,8 +121,14 @@ export function FilterBar() {
               min="0"
               step="0.01"
             />
-            <span className="text-muted-foreground">-</span>
+            <span className="text-muted-foreground" aria-hidden="true">
+              -
+            </span>
+            <Label htmlFor="maxPrice" className="sr-only">
+              Preço máximo
+            </Label>
             <Input
+              id="maxPrice"
               type="number"
               placeholder="Max (R$)"
               value={maxPrice}

@@ -1,8 +1,11 @@
+import { EmptyState } from "@/components/EmptyState";
 import { FilterBar } from "@/components/FilterBar";
 import { PackCard } from "@/components/PackCard";
 import { Pagination } from "@/components/Pagination";
+import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
-import React from "react";
+import { Search } from "lucide-react";
+import Link from "next/link";
 
 interface HomeProps {
   searchParams: {
@@ -74,9 +77,16 @@ export default async function HomePage({ searchParams }: HomeProps) {
       </div>
 
       {packsData.data.length === 0 && (
-        <div className="mt-12 text-center text-muted-foreground">
-          Nenhum pack encontrado com esses filtros.
-        </div>
+        <EmptyState
+          icon={Search}
+          title="Nenhum pack encontrado"
+          description="Tente ajustar seus filtros ou explorar outras categorias."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/">Limpar filtros</Link>
+            </Button>
+          }
+        />
       )}
 
       <Pagination

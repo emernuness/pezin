@@ -48,9 +48,14 @@ export function PackCard({
                 Comprado
               </span>
             ) : (
-              <span className="text-lg font-bold text-foreground font-mono">
-                {formattedPrice}
-              </span>
+              <>
+                <span className="text-lg font-bold text-foreground font-mono">
+                  {formattedPrice}
+                </span>
+                <span className="text-sm text-primary font-medium group-hover:underline">
+                  Ver pack →
+                </span>
+              </>
             )}
           </div>
         </div>

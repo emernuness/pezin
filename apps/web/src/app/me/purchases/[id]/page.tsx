@@ -3,9 +3,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
-import { Download, FileIcon, ImageIcon, VideoIcon } from "lucide-react";
+import { Download, ImageIcon, VideoIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface PackViewerProps {
   params: {
@@ -46,16 +47,18 @@ export default function PackViewerPage({ params }: PackViewerProps) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        const retryAfter = error.response?.data?.retryAfter;
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { status?: number; data?: { retryAfter?: number } };
+      };
+      if (axiosError.response?.status === 429) {
+        const retryAfter = axiosError.response?.data?.retryAfter;
         const hoursLeft = retryAfter ? Math.ceil(retryAfter / 3600) : 24;
-        alert(
-          `Você atingiu o limite de 10 downloads por dia para este arquivo. ` +
-            `Tente novamente em ${hoursLeft} hora${hoursLeft > 1 ? "s" : ""}.`,
+        toast.error(
+          `Limite de downloads atingido. Tente novamente em ${hoursLeft} hora${hoursLeft > 1 ? "s" : ""}.`,
         );
       } else {
-        alert("Erro ao gerar download. Tente novamente.");
+        toast.error("Erro ao gerar download. Tente novamente.");
       }
     } finally {
       setDownloading(null);
@@ -63,7 +66,7 @@ export default function PackViewerPage({ params }: PackViewerProps) {
   };
 
   const handleDownloadZip = () => {
-    alert("Funcionalidade de download ZIP em breve!");
+    toast.info("Funcionalidade de download ZIP em breve!");
   };
 
   if (loading)
@@ -86,19 +89,19 @@ export default function PackViewerPage({ params }: PackViewerProps) {
       <div className="mb-8">
         <Link
           href="/me/purchases"
-          className="text-sm text-gray-500 hover:text-gray-900"
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Voltar para Meus Packs
         </Link>
         <div className="mt-4 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{pack.title}</h1>
+            <h1 className="text-3xl font-bold text-foreground">{pack.title}</h1>
             <div className="mt-2 flex items-center gap-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={pack.creator.profileImage} />
                 <AvatarFallback>{pack.creator.displayName[0]}</AvatarFallback>
               </Avatar>
-              <span className="text-gray-600">@{pack.creator.displayName}</span>
+              <span className="text-muted-foreground">@{pack.creator.displayName}</span>
             </div>
           </div>
           <Button onClick={handleDownloadZip} variant="secondary">
@@ -109,12 +112,12 @@ export default function PackViewerPage({ params }: PackViewerProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {pack.files.map((file: any) => (
+        {pack.files.map((file: { id: string; mimeType: string; filename: string }) => (
           <div
             key={file.id}
-            className="group relative overflow-hidden rounded-lg border bg-gray-50"
+            className="group relative overflow-hidden rounded-lg border border-border bg-muted"
           >
-            <div className="aspect-square flex items-center justify-center bg-gray-100 text-gray-400">
+            <div className="aspect-square flex items-center justify-center bg-muted text-muted-foreground">
               {file.mimeType.startsWith("image") ? (
                 <ImageIcon className="h-12 w-12" />
               ) : (
@@ -122,8 +125,8 @@ export default function PackViewerPage({ params }: PackViewerProps) {
               )}
             </div>
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="mb-2 px-2 text-center text-xs text-white truncate w-full">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/90 opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="mb-2 px-2 text-center text-xs text-secondary-foreground truncate w-full">
                 {file.filename}
               </span>
               <Button
