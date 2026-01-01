@@ -31,12 +31,19 @@ export function UserNav() {
 
   const getInitials = (name?: string) => {
     if (!name) return "U";
-    return name
-      .split(" ")
+
+    const trimmedName = name.trim();
+    if (!trimmedName) return "U";
+
+    const initials = trimmedName
+      .split(/\s+/)
+      .filter(Boolean)
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .substring(0, 2);
+
+    return initials || "U";
   };
 
   return (
