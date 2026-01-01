@@ -16,7 +16,6 @@ import {
   LayoutDashboard,
   LogOut,
   ShoppingBag,
-  User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
