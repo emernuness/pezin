@@ -12,11 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/auth.store";
-import {
-  LayoutDashboard,
-  LogOut,
-  ShoppingBag,
-} from "lucide-react";
+import { LayoutDashboard, LogOut, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

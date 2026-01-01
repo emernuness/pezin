@@ -19,12 +19,8 @@ export function FilterBar() {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "recent");
-  const [minPrice, setMinPrice] = useState(
-    searchParams.get("minPrice") || "",
-  );
-  const [maxPrice, setMaxPrice] = useState(
-    searchParams.get("maxPrice") || "",
-  );
+  const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

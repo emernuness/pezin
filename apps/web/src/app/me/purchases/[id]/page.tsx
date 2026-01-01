@@ -101,7 +101,9 @@ export default function PackViewerPage({ params }: PackViewerProps) {
                 <AvatarImage src={pack.creator.profileImage} />
                 <AvatarFallback>{pack.creator.displayName[0]}</AvatarFallback>
               </Avatar>
-              <span className="text-muted-foreground">@{pack.creator.displayName}</span>
+              <span className="text-muted-foreground">
+                @{pack.creator.displayName}
+              </span>
             </div>
           </div>
           <Button onClick={handleDownloadZip} variant="secondary">
@@ -112,38 +114,40 @@ export default function PackViewerPage({ params }: PackViewerProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {pack.files.map((file: { id: string; mimeType: string; filename: string }) => (
-          <div
-            key={file.id}
-            className="group relative overflow-hidden rounded-lg border border-border bg-muted"
-          >
-            <div className="aspect-square flex items-center justify-center bg-muted text-muted-foreground">
-              {file.mimeType.startsWith("image") ? (
-                <ImageIcon className="h-12 w-12" />
-              ) : (
-                <VideoIcon className="h-12 w-12" />
-              )}
-            </div>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/90 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="mb-2 px-2 text-center text-xs text-secondary-foreground truncate w-full">
-                {file.filename}
-              </span>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleDownload(file.id, file.filename)}
-                disabled={downloading === file.id}
-              >
-                {downloading === file.id ? (
-                  "..."
+        {pack.files.map(
+          (file: { id: string; mimeType: string; filename: string }) => (
+            <div
+              key={file.id}
+              className="group relative overflow-hidden rounded-lg border border-border bg-muted"
+            >
+              <div className="aspect-square flex items-center justify-center bg-muted text-muted-foreground">
+                {file.mimeType.startsWith("image") ? (
+                  <ImageIcon className="h-12 w-12" />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <VideoIcon className="h-12 w-12" />
                 )}
-              </Button>
+              </div>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/90 opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="mb-2 px-2 text-center text-xs text-secondary-foreground truncate w-full">
+                  {file.filename}
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleDownload(file.id, file.filename)}
+                  disabled={downloading === file.id}
+                >
+                  {downloading === file.id ? (
+                    "..."
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </div>
     </main>
   );
