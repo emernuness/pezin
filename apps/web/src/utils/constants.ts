@@ -5,6 +5,8 @@
 
 // Image placeholders
 export const PLACEHOLDER_IMAGE = "/placeholder-pack.jpg";
+export const PLACEHOLDER_IMAGE_SVG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
 export const PLACEHOLDER_AVATAR = "/placeholder-avatar.png";
 
 // File upload constraints
@@ -48,4 +50,18 @@ export const PACK_STATUS_COLORS: Record<string, string> = {
   published: "bg-green-500/10 text-green-600 border-green-500/20",
   unpublished: "bg-gray-500/10 text-gray-600 border-gray-500/20",
   deleted: "bg-red-500/10 text-red-600 border-red-500/20",
+};
+
+// Withdrawal statuses for display
+export const WITHDRAWAL_STATUS_LABELS: Record<
+  string,
+  { label: string; className: string }
+> = {
+  pending: { label: "Pendente", className: "bg-yellow-500/10 text-black/60" },
+  processing: {
+    label: "Processando",
+    className: "bg-blue-500/10 text-blue-600",
+  },
+  completed: { label: "Concluído", className: "bg-green-500/10 text-green-600" },
+  failed: { label: "Falhou", className: "bg-red-500/10 text-red-600" },
 };

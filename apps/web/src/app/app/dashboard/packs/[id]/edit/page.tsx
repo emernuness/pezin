@@ -6,15 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/services/api";
+import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 import { ArrowLeft, Trash2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-// Simple SVG placeholder as data URL
-const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
 
 interface EditPackPageProps {
   params: {
@@ -375,7 +373,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
                 className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
               >
                 <img
-                  src={preview.url || PLACEHOLDER_IMAGE}
+                  src={preview.url || PLACEHOLDER_IMAGE_SVG}
                   alt="Preview"
                   className="h-full w-full object-cover"
                 />

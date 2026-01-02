@@ -3,12 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/services/api";
+import { formatCurrency } from "@/utils/formatters";
+import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 import { Check, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-
-// Simple SVG placeholder as data URL
-const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
 
 interface PackDetailProps {
   params: {
@@ -64,10 +63,7 @@ export default async function PackPage({ params }: PackDetailProps) {
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(pack.price / 100);
+  const formattedPrice = formatCurrency(pack.price);
 
   return (
     <main className="container mx-auto min-h-screen px-4 py-8">
@@ -76,7 +72,7 @@ export default async function PackPage({ params }: PackDetailProps) {
           <div className="overflow-hidden rounded-lg border bg-muted shadow-card">
             <div className="aspect-[3/4] w-full">
               <img
-                src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE}
+                src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE_SVG}
                 alt={pack.title}
                 className="h-full w-full object-cover"
               />

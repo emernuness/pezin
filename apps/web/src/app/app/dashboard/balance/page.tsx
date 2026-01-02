@@ -1,11 +1,26 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/auth.store";
-import { AlertCircle, ArrowDownToLine, CheckCircle2, Clock, DollarSign, Wallet } from "lucide-react";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import { WITHDRAWAL_STATUS_LABELS } from "@/utils/constants";
+import {
+  AlertCircle,
+  ArrowDownToLine,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -23,12 +38,6 @@ interface Withdrawal {
   failureReason: string | null;
 }
 
-const statusLabels: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pendente", className: "bg-yellow-500/10 text-black/60" },
-  processing: { label: "Processando", className: "bg-blue-500/10 text-blue-600" },
-  completed: { label: "Concluído", className: "bg-green-500/10 text-green-600" },
-  failed: { label: "Falhou", className: "bg-red-500/10 text-red-600" },
-};
 
 function BalanceSkeleton() {
   return (
@@ -84,20 +93,6 @@ export default function BalancePage() {
     }
   }
 
-  const formatCurrency = (cents: number) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(cents / 100);
-
-  const formatDate = (dateStr: string) =>
-    new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(dateStr));
 
   if (loading) return <BalanceSkeleton />;
 
@@ -244,7 +239,7 @@ export default function BalancePage() {
           ) : (
             <div className="space-y-4">
               {withdrawals.map((withdrawal) => {
-                const status = statusLabels[withdrawal.status];
+                const status = WITHDRAWAL_STATUS_LABELS[withdrawal.status];
                 return (
                   <div
                     key={withdrawal.id}

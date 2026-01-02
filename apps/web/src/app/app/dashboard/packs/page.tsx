@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
+import { formatCurrency } from "@/utils/formatters";
+import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 import { Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -16,9 +18,6 @@ interface Pack {
   previews?: { url: string }[];
   _count?: { purchases: number };
 }
-
-// Simple SVG placeholder as data URL
-const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
 
 export default function PacksDashboardPage() {
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -104,7 +103,7 @@ export default function PacksDashboardPage() {
                       <div className="h-10 w-10 flex-shrink-0">
                         <img
                           className="h-10 w-10 rounded-md object-cover"
-                          src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE}
+                          src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE_SVG}
                           alt=""
                         />
                       </div>
@@ -125,10 +124,7 @@ export default function PacksDashboardPage() {
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(pack.price / 100)}
+                    {formatCurrency(pack.price)}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {pack._count?.purchases || 0}
