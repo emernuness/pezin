@@ -1,6 +1,6 @@
 # Progress - Pack do Pezin
 
-> Última atualização: 2024-12-31
+> Última atualização: 2025-01-02
 
 ## O Que Funciona
 
@@ -9,7 +9,7 @@
 - [x] packages/shared com Zod schemas e types
 - [x] Docker Compose para desenvolvimento
 - [x] Schema Prisma completo
-- [x] **Sistema de Seed completo e idempotente**
+- [x] Sistema de Seed completo e idempotente
 
 ### Backend (API)
 
@@ -20,16 +20,18 @@
 - [x] Logout com revogação
 - [x] Guards: JwtAuthGuard, RolesGuard
 - [x] Decorators: @CurrentUser, @Roles
+- [x] Upload de avatar/cover com conversão WebP
 - [x] Testes unitários e E2E
 
 #### Módulos
 - [x] **Health** - Status da API e database
-- [x] **Packs** - Upload URLs, confirmação, download URLs
-- [x] **Storage** - Integração Cloudflare R2
+- [x] **Packs** - Upload URLs, confirmação, download URLs, conversão de mídia
+- [x] **Storage** - Integração Cloudflare R2, download/upload direto
 - [x] **Stripe** - Checkout, Connect onboarding, webhooks
 - [x] **Purchases** - Listagem e verificação de compras
 - [x] **Dashboard** - Stats, balance, sales, chart
 - [x] **Public** - Listagem de packs e creators
+- [x] **Media** - Conversão de imagens (WebP) e vídeos (WebM)
 
 #### Segurança
 - [x] Rate limiting (100 req/min global, 10 req/min auth)
@@ -37,28 +39,39 @@
 - [x] Validação Zod via pipe customizado
 - [x] Webhook signature verification
 - [x] Idempotência de webhooks (StripeEvent)
+- [x] Signed URLs para acesso a arquivos
 
 ### Frontend (Web)
 
+#### Refatoração Completa (Sprints 1-7)
+- [x] `utils/formatters.ts` - Formatadores compartilhados
+- [x] `utils/constants.ts` - Constantes centralizadas
+- [x] `components/common/` - PageHeader, EmptyState, ImageWithFallback, StatusBadge, LoadingScreen
+- [x] `components/cards/` - PackCard, CreatorCard, StatCard, ActivityCard
+- [x] `components/grids/` - PackGrid, GridSkeleton
+- [x] `components/tables/` - DataTable, TableSkeleton
+- [x] `components/forms/` - PasswordInput, FormField
+- [x] Páginas refatoradas com `_components/`
+- [x] Barrel exports em todas as pastas
+
 #### Páginas Implementadas
 - [x] `/` - Home/Landing
-- [x] `/login` - Login
-- [x] `/signup` - Cadastro
-- [x] `/dashboard` - Dashboard do criador
+- [x] `/login` - Login (componentizado)
+- [x] `/signup` - Cadastro (4 steps componentizados)
+- [x] `/dashboard` - Dashboard do criador (refatorado)
 - [x] `/dashboard/packs` - Gerenciamento de packs
+- [x] `/dashboard/packs/[id]/edit` - Editor de pack (refatorado)
+- [x] `/dashboard/balance` - Saldo e saques
 - [x] `/pack/[id]` - Página pública do pack
 - [x] `/c/[slug]` - Perfil público do criador
 - [x] `/me/purchases` - Minhas compras
+- [x] `/profile` - Edição de perfil (refatorado)
 
-#### Componentes
-- [x] PackCard
-- [x] CreatorCard
-- [x] FilterBar
-- [x] BuyButton
-- [x] Pagination
-- [x] Badge (Design System)
-- [x] Button (Design System)
-- [x] UI base (shadcn/ui)
+#### Sistema de Upload
+- [x] `useMediaUpload` hook - Multi-arquivo, progress, conversão
+- [x] `MediaUploader` component - Drag & drop, previews visuais
+- [x] Conversão WebP no browser (Canvas API)
+- [x] Progress tracking com XHR
 
 #### Estado e Serviços
 - [x] Zustand auth store
@@ -73,14 +86,13 @@
 ## O Que Falta Construir
 
 ### Alta Prioridade
-- [ ] **Upload no Frontend** - Interface para upload de arquivos nos packs
+- [ ] **Testar fluxo completo** de upload com conversão no ambiente real
+- [ ] **FFmpeg em Docker** - Adicionar ao Dockerfile se necessário
 - [ ] **Onboarding Stripe** - Fluxo completo no frontend
-- [ ] **CRUD de Packs** - Criar/editar packs no dashboard
 - [ ] **Verificação de Email** - Envio e confirmação
 
 ### Média Prioridade
 - [ ] **Sistema de Saques** - Interface para solicitar saques
-- [ ] **Edição de Perfil** - Foto, bio, slug
 - [ ] **Página de Configurações** - Preferências do usuário
 
 ### Baixa Prioridade
@@ -91,17 +103,44 @@
 ## Status Atual
 
 ```
-████████████████████░░░░░  80% Backend
-██████████████░░░░░░░░░░░  60% Frontend
-████████████████████████░  95% Infraestrutura
-██████████████████░░░░░░░  70% Overall
+█████████████████████████  95% Backend
+████████████████████████░  90% Frontend
+█████████████████████████  95% Infraestrutura
+████████████████████████░  90% Overall
 ```
 
 ## Problemas Conhecidos
 
-Nenhum bug crítico identificado. Itens pendentes são features novas.
+- **FFmpeg em Produção**: Verificar se o Docker tem FFmpeg instalado
+- Nenhum bug crítico identificado
 
 ## Histórico de Releases
+
+### v0.3.0 (2025-01-02)
+- **Sistema de Conversão de Mídia (Backend)**
+  - MediaService com Sharp e FFmpeg
+  - Imagens → WebP (85% qualidade)
+  - Vídeos → WebM (VP9/Opus)
+  - Integrado em PacksService e AuthService
+  - StorageService com download/upload direto
+
+- **Sistema de Upload (Frontend)**
+  - useMediaUpload hook completo
+  - MediaUploader component com drag & drop
+  - Previews visuais antes do upload
+  - Conversão WebP no browser
+
+- **Correção de Bug**
+  - URLs de preview de packs agora usam signed URLs
+
+### v0.2.0 (2025-01-01)
+- **Grande Refatoração (Sprints 1-7)**
+  - Utilitários compartilhados (formatters, constants)
+  - Componentes organizados (common, cards, grids, tables, forms)
+  - Páginas refatoradas com _components/
+  - SignupForm e LoginForm componentizados
+  - Barrel exports em todas as pastas
+  - JSDoc em componentes principais
 
 ### v0.1.1 (2024-12-31)
 - **Sistema de Seed robusto**
@@ -110,8 +149,8 @@ Nenhum bug crítico identificado. Itens pendentes são features novas.
   - 184 arquivos, 45 previews
   - 25 purchases, 12 withdrawals
   - 46 download logs com cenários de rate limiting
-  - Geração automática de 75 imagens temáticas (neon/sensual)
-  - Idempotência garantida (pode rodar múltiplas vezes)
+  - Geração automática de 75 imagens temáticas
+  - Idempotência garantida
 - Scripts: `pnpm db:seed` e `pnpm db:reset`
 - Contas demo: `buyer_demo@local.test` / `creator_demo@local.test`
 
@@ -125,16 +164,19 @@ Nenhum bug crítico identificado. Itens pendentes são features novas.
 ## Métricas de Código
 
 ```
-apps/api/src/modules/     8 módulos
-apps/web/src/app/         8 rotas
-apps/web/src/components/  7 componentes
+apps/api/src/modules/     9 módulos (+media)
+apps/web/src/app/         10+ rotas
+apps/web/src/components/  5 categorias organizadas
+apps/web/src/utils/       formatters + constants
+apps/web/src/hooks/       useMediaUpload + outros
 packages/shared/          schemas + types
 ```
 
 ## Próximo Milestone
 
-**v0.2.0 - Flow Completo do Criador**
-- [ ] Upload de arquivos no frontend
-- [ ] CRUD de packs no dashboard
+**v0.4.0 - Produção Ready**
+- [ ] Testar conversão de mídia em produção
+- [ ] FFmpeg no Docker
 - [ ] Onboarding Stripe integrado
 - [ ] Verificação de email
+- [ ] Testes E2E críticos

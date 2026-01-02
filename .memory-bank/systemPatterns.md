@@ -73,6 +73,49 @@ Refresh Token (7 dias) ──► HTTP-only Cookie (Secure, SameSite=Strict)
 3. Frontend ──► GET (signed URL) ──► Cloudflare R2
 ```
 
+## Padrões de Conversão de Mídia
+
+### Media Conversion Pipeline
+```
+1. Upload ──► R2 (arquivo original)
+
+2. Backend (confirmUpload):
+   - Detecta tipo de mídia
+   - Se imagem (não WebP) ──► Sharp ──► WebP (85% qualidade)
+   - Se vídeo (não WebM) ──► FFmpeg ──► WebM (VP9/Opus)
+
+3. Re-upload ──► R2 (arquivo convertido)
+
+4. Delete ──► R2 (arquivo original, se diferente)
+```
+
+### MediaService (`apps/api/src/modules/media/`)
+```typescript
+// Verifica se precisa converter
+shouldConvert(mimeType: string): boolean
+
+// Converte para formato otimizado
+convert(buffer: Buffer, mimeType: string): Promise<ConversionResult>
+
+// Resultado inclui buffer, novo mimeType, extension, tamanhos
+interface ConversionResult {
+  buffer: Buffer;
+  mimeType: string;
+  extension: string;
+  originalSize: number;
+  convertedSize: number;
+}
+```
+
+### Formatos de Saída
+- **Imagens**: WebP com qualidade 85%
+- **Vídeos**: WebM com VP9 (vídeo) + Opus (áudio)
+
+### Dependências
+- `sharp` - Conversão de imagens
+- `fluent-ffmpeg` - Conversão de vídeos
+- FFmpeg binário no ambiente de execução
+
 ## Padrões de Pagamento
 
 ### Stripe Checkout + Connect
@@ -137,6 +180,58 @@ stores/
 - Access token em memória (não persiste)
 - User data persiste via middleware
 - Refresh automático via Axios interceptor
+
+## Padrões de Componentes (Frontend)
+
+### Estrutura de Pastas
+```
+components/
+├── common/          # PageHeader, EmptyState, ImageWithFallback, StatusBadge, LoadingScreen
+├── cards/           # PackCard, CreatorCard, StatCard, ActivityCard
+├── grids/           # PackGrid, GridSkeleton
+├── tables/          # DataTable, TableSkeleton
+├── forms/           # PasswordInput, FormField
+├── auth/            # SignupForm/, LoginForm/
+├── layout/          # AppHeader, Sidebar
+└── ui/              # shadcn/ui base components
+```
+
+### Padrão de Páginas com Sub-componentes
+```
+app/app/dashboard/
+├── page.tsx                 # Página principal (~60 linhas, orquestração)
+└── _components/
+    ├── index.ts             # Barrel export
+    ├── types.ts             # Interfaces compartilhadas
+    ├── DashboardSkeleton.tsx
+    ├── StatsGrid.tsx
+    ├── RevenueChart.tsx
+    └── RecentActivity.tsx
+```
+
+### Utilitários Compartilhados
+```
+utils/
+├── formatters.ts    # formatCurrency, formatDate, formatCPF, formatPhone, formatCEP
+└── constants.ts     # PLACEHOLDER_IMAGE, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE
+```
+
+### Hooks Customizados
+```
+hooks/
+├── useMediaUpload.ts   # Multi-file upload com conversão e progress
+├── useCurrencyFormat.ts
+└── useDebounce.ts
+```
+
+### Barrel Exports
+Cada pasta de componentes tem `index.ts`:
+```typescript
+// components/common/index.ts
+export * from './PageHeader'
+export * from './EmptyState'
+// etc.
+```
 
 ## Padrões de API
 
