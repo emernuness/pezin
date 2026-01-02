@@ -7,6 +7,7 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 @Injectable()
 export class StorageService {
@@ -74,5 +75,53 @@ export class StorageService {
 
     await this.client.send(command);
     this.logger.log(`Deleted file: ${key}`);
+  }
+
+  /**
+   * Download file from storage and return as Buffer
+   */
+  async downloadFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.client.send(command);
+
+    if (!response.Body) {
+      throw new Error('No body in response');
+    }
+
+    // Convert stream to buffer
+    const stream = response.Body as Readable;
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    const buffer = Buffer.concat(chunks);
+    this.logger.debug(`Downloaded file: ${key} (${buffer.length} bytes)`);
+
+    return buffer;
+  }
+
+  /**
+   * Upload file directly to storage
+   */
+  async uploadFile(
+    key: string,
+    buffer: Buffer,
+    contentType: string
+  ): Promise<void> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await this.client.send(command);
+    this.logger.log(`Uploaded file: ${key} (${buffer.length} bytes)`);
   }
 }

@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { MediaService } from '../media/media.service';
 import {
   SignUpInput,
   LoginInput,
@@ -34,7 +35,8 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
-    private storage: StorageService
+    private storage: StorageService,
+    private media: MediaService
   ) {}
 
   async signUp(dto: SignUpInput): Promise<{ message: string }> {
@@ -450,9 +452,42 @@ export class AuthService {
       throw new BadRequestException('Chave de arquivo inválida');
     }
 
+    // Get content type from key extension
+    const extension = key.split('.').pop()?.toLowerCase();
+    const mimeTypeMap: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
+    const mimeType = mimeTypeMap[extension || ''] || 'image/jpeg';
+
+    // Convert to WebP if needed
+    let finalKey = key;
+    if (this.media.shouldConvert(mimeType)) {
+      try {
+        this.logger.log(`Converting ${imageType} image to WebP: ${key}`);
+        const originalBuffer = await this.storage.downloadFile(key);
+        const result = await this.media.convert(originalBuffer, mimeType);
+
+        // Generate new key with WebP extension
+        finalKey = key.replace(/\.[^.]+$/, `.${result.extension}`);
+        await this.storage.uploadFile(finalKey, result.buffer, result.mimeType);
+
+        // Delete original file if key changed
+        if (finalKey !== key) {
+          await this.storage.deleteFile(key);
+          this.logger.log(`Converted and replaced ${imageType} image: ${finalKey}`);
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to convert ${imageType} image, using original`, error);
+        finalKey = key;
+      }
+    }
+
     // Get the public URL for the image
     const cdnUrl = this.config.get<string>('R2_PUBLIC_URL');
-    const imageUrl = cdnUrl ? `${cdnUrl}/${key}` : key;
+    const imageUrl = cdnUrl ? `${cdnUrl}/${finalKey}` : finalKey;
 
     // Get old image key to delete later
     const user = await this.prisma.user.findUnique({

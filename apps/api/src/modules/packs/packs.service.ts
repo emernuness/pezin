@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class PacksService {
@@ -30,7 +31,8 @@ export class PacksService {
 
   constructor(
     private prisma: PrismaService,
-    private storage: StorageService
+    private storage: StorageService,
+    private media: MediaService
   ) {}
 
   /**
@@ -353,6 +355,49 @@ export class PacksService {
       throw new BadRequestException('Tamanho total do pack excede 500MB');
     }
 
+    // Convert media if needed
+    let finalKey = key;
+    let finalMimeType = mimeType;
+    let finalSize = size;
+    let finalFilename = _filename;
+
+    if (this.media.shouldConvert(mimeType)) {
+      try {
+        this.logger.log(`Converting ${mimeType} file: ${_filename}`);
+
+        // Download original file
+        const originalBuffer = await this.storage.downloadFile(key);
+
+        // Convert
+        const result = await this.media.convert(originalBuffer, mimeType);
+
+        // Generate new key with correct extension
+        finalFilename = this.media.getConvertedFilename(_filename, mimeType);
+        finalKey = key.replace(/\.[^.]+$/, `.${result.extension}`);
+        finalMimeType = result.mimeType;
+        finalSize = result.convertedSize;
+
+        // Upload converted file
+        await this.storage.uploadFile(finalKey, result.buffer, result.mimeType);
+
+        // Delete original if key changed
+        if (finalKey !== key) {
+          try {
+            await this.storage.deleteFile(key);
+          } catch (deleteErr) {
+            this.logger.warn(`Failed to delete original file: ${key}`, deleteErr);
+          }
+        }
+
+        this.logger.log(
+          `Converted ${_filename} -> ${finalFilename} (${size} -> ${finalSize} bytes)`
+        );
+      } catch (conversionError) {
+        this.logger.error('Media conversion failed, using original', conversionError);
+        // Fall back to original file
+      }
+    }
+
     if (type === 'preview') {
       const previewCount = await this.prisma.packPreview.count({
         where: { packId },
@@ -362,7 +407,7 @@ export class PacksService {
         data: {
           id: fileId,
           packId,
-          url: key, // Store key, will generate signed URL on read
+          url: finalKey, // Store key, will generate signed URL on read
           order: previewCount,
         },
       });
@@ -375,10 +420,10 @@ export class PacksService {
       data: {
         id: fileId,
         packId,
-        filename: _filename,
-        mimeType,
-        size,
-        storageKey: key,
+        filename: finalFilename,
+        mimeType: finalMimeType,
+        size: finalSize,
+        storageKey: finalKey,
         order: fileCount,
       },
     });

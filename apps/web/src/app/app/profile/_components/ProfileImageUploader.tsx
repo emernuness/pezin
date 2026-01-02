@@ -118,7 +118,7 @@ export function ProfileImageUploader({
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
           <div className="relative">
-            <Avatar className="h-24 w-24 rounded-xl">
+            <Avatar className="h-80 w-auto rounded-xl">
               <AvatarImage
                 src={currentImage || undefined}
                 alt={displayName || "Usuario"}
