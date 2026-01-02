@@ -19,7 +19,8 @@ Plataforma de monetização de conteúdo adulto para criadores venderem packs (c
 pack-do-pezin/
 ├── apps/
 │   ├── api/          # NestJS Backend
-│   └── web/          # Next.js Frontend
+│   ├── web/          # Next.js Frontend
+│   └── worker/       # Cloudflare Worker (CDN)
 ├── packages/
 │   └── shared/       # Schemas Zod e tipos compartilhados
 ├── docker-compose.yml
@@ -35,11 +36,60 @@ pnpm install
 # Subir banco de dados
 pnpm docker:up
 
-# Rodar em desenvolvimento
+# Rodar em desenvolvimento (API + Web + Worker)
 pnpm dev
 ```
 
+Isso inicia simultaneamente:
+- **API** em `http://localhost:3001`
+- **Web** em `http://localhost:3000`
+- **Worker (CDN)** em `http://localhost:8787`
+
 Para instruções detalhadas, consulte o [Guia de Desenvolvimento](./README-DEV.md).
+
+## Cloudflare Worker (CDN)
+
+O projeto inclui um Cloudflare Worker que serve como proxy seguro para arquivos do R2. Isso garante que:
+
+- **URLs tokenizadas**: Frontend nunca vê paths reais do R2
+- **Segurança**: Tokens JWT com expiração de 1 hora
+- **Auditoria**: Estrutura organizada por usuário facilita auditorias
+
+### Desenvolvimento Local
+
+O Worker roda automaticamente com `pnpm dev`. Para rodar isoladamente:
+
+```bash
+pnpm worker:dev
+```
+
+### Deploy para Produção
+
+```bash
+# 1. Configurar secrets (uma vez)
+cd apps/worker
+wrangler secret put MEDIA_TOKEN_SECRET
+wrangler secret put API_INTERNAL_KEY
+
+# 2. Deploy
+pnpm worker:deploy
+```
+
+### Variáveis de Ambiente
+
+No backend (`apps/api/.env`):
+```env
+MEDIA_TOKEN_SECRET=<256-bit-secret>
+MEDIA_TOKEN_EXPIRES_IN=3600
+CDN_WORKER_URL=http://localhost:8787
+WORKER_INTERNAL_API_KEY=<api-key>
+```
+
+No Worker (`apps/worker/.dev.vars` ou secrets):
+```
+MEDIA_TOKEN_SECRET=<mesmo-secret-do-backend>
+API_INTERNAL_KEY=<mesmo-api-key>
+```
 
 ## Credenciais de Teste (Seeder)
 
@@ -76,16 +126,19 @@ Após rodar o seeder (`pnpm db:seed`), as seguintes contas estarão disponíveis
 - Autenticação JWT com refresh token rotation
 - Rate limiting
 - Validação de arquivos (MIME + magic bytes)
+- **CDN com URLs tokenizadas** (Cloudflare Worker)
 - LGPD compliance
 
 ## Scripts Principais
 
 ```bash
-pnpm dev              # Desenvolvimento
+pnpm dev              # Desenvolvimento (API + Web + Worker)
 pnpm build            # Build de produção
 pnpm test             # Testes
 pnpm typecheck        # Verificação de tipos
 pnpm prisma:studio    # Visualizar banco de dados
+pnpm worker:dev       # Worker isoladamente
+pnpm worker:deploy    # Deploy do Worker
 ```
 
 ## Documentação
@@ -104,6 +157,8 @@ pnpm prisma:studio    # Visualizar banco de dados
 - [x] Módulo de Purchases (compras, histórico)
 - [x] Integração Stripe (Checkout + Connect + Webhooks)
 - [x] Storage R2 (upload via presigned URLs)
+- [x] **Cloudflare Worker CDN** (URLs tokenizadas)
+- [x] **MediaToken Module** (JWT para mídia)
 - [x] Dashboard API (métricas de criadores)
 - [x] API pública (listagem de packs/criadores)
 - [x] Rate limiting e download logs

@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.wrangler/
+
+# Environment secrets (never commit)
+.dev.vars
+
+# IDE
+.idea/
+.vscode/

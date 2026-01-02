@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class PublicService {
@@ -9,6 +10,7 @@ export class PublicService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private storage: StorageService,
   ) {
     // In development, use localhost API URL for serving seed assets
     // In production, would use R2 signed URLs
@@ -26,6 +28,36 @@ export class PublicService {
 
     // For seed data paths like "previews/preview_01.jpg", transform to API asset URL
     return `${this.apiBaseUrl}/assets/${url}`;
+  }
+
+  /**
+   * Transform preview URL to secure token-based URL
+   * Uses creator's userId for the token since previews are owned by creators
+   */
+  private transformPreviewUrl(
+    preview: { id: string; url: string },
+    packId: string,
+    creatorId: string
+  ): string {
+    // If already a full URL or data URL, return as-is
+    if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
+      return preview.url;
+    }
+
+    // For seed data paths, use the old transform
+    if (!preview.url.includes('/')) {
+      return this.transformAssetUrl(preview.url) || preview.url;
+    }
+
+    // Generate secure token-based URL for R2 storage keys
+    return this.storage.generateMediaUrl(
+      creatorId,
+      preview.id,
+      'preview',
+      packId,
+      undefined,
+      'image/webp'
+    );
   }
 
   async findAllPacks(params: {
@@ -98,7 +130,7 @@ export class PublicService {
       }),
     ]);
 
-    // Transform URLs to full asset URLs
+    // Transform URLs to full asset URLs (secure token-based for previews)
     const transformedPacks = packs.map((pack) => ({
       ...pack,
       creator: {
@@ -107,7 +139,7 @@ export class PublicService {
       },
       previews: pack.previews.map((preview) => ({
         ...preview,
-        url: this.transformAssetUrl(preview.url),
+        url: this.transformPreviewUrl(preview, pack.id, pack.creatorId),
       })),
     }));
 
@@ -146,7 +178,7 @@ export class PublicService {
 
     if (!pack) throw new NotFoundException('Pack not found');
 
-    // Transform URLs to full asset URLs
+    // Transform URLs to full asset URLs (secure token-based for previews)
     return {
       ...pack,
       creator: {
@@ -155,7 +187,7 @@ export class PublicService {
       },
       previews: pack.previews.map((preview) => ({
         ...preview,
-        url: this.transformAssetUrl(preview.url),
+        url: this.transformPreviewUrl(preview, pack.id, pack.creatorId),
       })),
     };
   }

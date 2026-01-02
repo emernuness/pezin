@@ -368,14 +368,41 @@ export class AuthService {
           }
         : null;
 
+    // Generate secure token-based URLs for profile images
+    let profileImage = user.profileImage;
+    let coverImage = user.coverImage;
+
+    // Only transform if it's a storage key (starts with 'users/')
+    if (profileImage && profileImage.startsWith('users/')) {
+      profileImage = this.storage.generateMediaUrl(
+        user.id,
+        'avatar',
+        'avatar',
+        undefined,
+        undefined,
+        'image/webp'
+      );
+    }
+
+    if (coverImage && coverImage.startsWith('users/')) {
+      coverImage = this.storage.generateMediaUrl(
+        user.id,
+        'cover',
+        'cover',
+        undefined,
+        undefined,
+        'image/webp'
+      );
+    }
+
     return {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
       slug: user.slug,
       bio: user.bio,
-      profileImage: user.profileImage,
-      coverImage: user.coverImage,
+      profileImage,
+      coverImage,
       birthDate: user.birthDate,
       userType: user.userType,
       emailVerified: user.emailVerified,
@@ -432,12 +459,28 @@ export class AuthService {
       );
     }
 
+    // Get user slug for organized folder structure
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { slug: true },
+    });
+
+    const userSlug = user?.slug || 'user';
     const extension = contentType.split('/')[1];
-    const key = `users/${userId}/${imageType}-${Date.now()}.${extension}`;
+    const timestamp = Date.now();
+
+    // New structure: users/{userId}/{userSlug}/{imageType}/{timestamp}.{extension}
+    const storageType = imageType === 'profile' ? 'avatar' : 'cover';
+    const key = this.storage.buildStorageKey(
+      userId,
+      userSlug,
+      storageType,
+      `${timestamp}.${extension}`
+    );
 
     const uploadUrl = await this.storage.getSignedUploadUrl(key, contentType);
 
-    this.logger.log(`Generated upload URL for ${imageType} image: ${userId}`);
+    this.logger.log(`Generated upload URL for ${imageType} image: ${userId}, key: ${key}`);
 
     return { uploadUrl, key };
   }
@@ -447,7 +490,7 @@ export class AuthService {
     key: string,
     imageType: 'profile' | 'cover' = 'profile'
   ) {
-    // Verify the key belongs to this user
+    // Verify the key belongs to this user (new structure: users/{userId}/{slug}/...)
     if (!key.startsWith(`users/${userId}/`)) {
       throw new BadRequestException('Chave de arquivo inválida');
     }
@@ -485,9 +528,8 @@ export class AuthService {
       }
     }
 
-    // Get the public URL for the image
-    const cdnUrl = this.config.get<string>('R2_PUBLIC_URL');
-    const imageUrl = cdnUrl ? `${cdnUrl}/${finalKey}` : finalKey;
+    // Store the storage key directly - token-based URL will be generated on read
+    // This allows us to generate secure URLs via Cloudflare Worker
 
     // Get old image key to delete later
     const user = await this.prisma.user.findUnique({
@@ -495,11 +537,11 @@ export class AuthService {
       select: { profileImage: true, coverImage: true },
     });
 
-    // Update user with new image
+    // Update user with storage key (not full URL)
     const updateData =
       imageType === 'profile'
-        ? { profileImage: imageUrl }
-        : { coverImage: imageUrl };
+        ? { profileImage: finalKey }
+        : { coverImage: finalKey };
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
@@ -509,11 +551,10 @@ export class AuthService {
     // Delete old image if it exists and is stored in R2
     const oldImage =
       imageType === 'profile' ? user?.profileImage : user?.coverImage;
-    if (oldImage && oldImage.includes(`users/${userId}/`)) {
+    if (oldImage && oldImage.startsWith('users/')) {
       try {
-        const oldKey = oldImage.split('/').slice(-3).join('/');
-        await this.storage.deleteFile(oldKey);
-        this.logger.log(`Deleted old ${imageType} image: ${oldKey}`);
+        await this.storage.deleteFile(oldImage);
+        this.logger.log(`Deleted old ${imageType} image: ${oldImage}`);
       } catch (error) {
         this.logger.warn(`Failed to delete old ${imageType} image`, error);
       }

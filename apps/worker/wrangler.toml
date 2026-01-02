@@ -1,0 +1,25 @@
+name = "packdopezin-cdn"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# R2 Bucket binding
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "pezin"
+
+# Production environment variables
+# Secrets (set via: wrangler secret put <NAME>):
+#   - MEDIA_TOKEN_SECRET
+#   - API_INTERNAL_KEY
+[vars]
+ENVIRONMENT = "production"
+API_INTERNAL_URL = "https://api.packdopezin.com"
+
+# Development overrides
+[env.development]
+name = "packdopezin-cdn-dev"
+vars = { ENVIRONMENT = "development", API_INTERNAL_URL = "http://localhost:3001" }
+
+[[env.development.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "pezin"

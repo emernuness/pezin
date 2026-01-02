@@ -8,13 +8,24 @@
 │   (Frontend)    │     │   (Backend)     │     │   (Database)    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │
-        │                       │
-        ▼                       ▼
+        │                       ▼
+        │               ┌─────────────────┐
+        │               │     Stripe      │
+        │               │   (Payments)    │
+        │               └─────────────────┘
+        │
+        ▼
 ┌─────────────────┐     ┌─────────────────┐
-│  Cloudflare R2  │     │     Stripe      │
-│   (Storage)     │     │   (Payments)    │
+│ Cloudflare      │────▶│  Cloudflare R2  │
+│ Worker (CDN)    │     │   (Storage)     │
 └─────────────────┘     └─────────────────┘
+        │
+        │ Valida token JWT
+        │ Resolve path via API interna
+        │ Faz proxy do arquivo
 ```
+
+**Importante**: O frontend NUNCA acessa o R2 diretamente. Todas as mídias são servidas via Cloudflare Worker com URLs tokenizadas.
 
 ## Padrões de Autenticação
 
@@ -60,7 +71,7 @@ Refresh Token (7 dias) ──► HTTP-only Cookie (Secure, SameSite=Strict)
 
 ## Padrões de Download
 
-### Signed URLs com Rate Limiting
+### Token-Based URLs via Cloudflare Worker
 ```
 1. Frontend ──► POST /packs/:packId/files/:fileId/download-url ──► Backend
 
@@ -68,10 +79,47 @@ Refresh Token (7 dias) ──► HTTP-only Cookie (Secure, SameSite=Strict)
    - Valida ownership (user comprou o pack?)
    - Verifica rate limit (10/dia por arquivo)
    - Incrementa contador no DownloadLog
-   - Gera signed URL (1 hora de validade)
+   - Gera token JWT com MediaTokenService
+   - Retorna URL: https://cdn.packdopezin.com/media/{token}
 
-3. Frontend ──► GET (signed URL) ──► Cloudflare R2
+3. Frontend ──► GET /media/{token} ──► Cloudflare Worker
+
+4. Worker:
+   - Valida assinatura JWT
+   - Verifica expiração (1 hora)
+   - Chama API interna para resolver path R2
+   - Busca arquivo do R2
+   - Retorna com headers apropriados
 ```
+
+### MediaToken Payload
+```typescript
+interface MediaTokenPayload {
+  sub: string;      // userId
+  res: string;      // resourceId (fileId, 'avatar', 'cover')
+  typ: 'file' | 'preview' | 'avatar' | 'cover';
+  pid?: string;     // packId (para arquivos de pack)
+  fn?: string;      // filename (para Content-Disposition)
+  ct?: string;      // contentType
+  exp: number;      // expiration timestamp
+}
+```
+
+### Estrutura de Storage Keys no R2
+```
+users/{userId}/{username}/
+├── packs/{packId}/
+│   ├── files/{fileId}
+│   └── previews/{fileId}
+├── avatar/{timestamp}.{ext}
+└── cover/{timestamp}.{ext}
+```
+
+**Vantagens:**
+- Frontend nunca vê paths do R2
+- Impossível enumerar arquivos
+- Tokens curtos (1h) limitam exposição
+- Estrutura organizada facilita auditoria manual
 
 ## Padrões de Conversão de Mídia
 

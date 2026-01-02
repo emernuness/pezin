@@ -53,33 +53,38 @@ export class PacksService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Generate signed URLs for previews
-    const packsWithUrls = await Promise.all(
-      packs.map(async (pack) => {
-        const previewsWithUrls = await Promise.all(
-          pack.previews.map(async (p) => {
-            if (p.url.startsWith('http') || p.url.startsWith('data:')) {
-              return { url: p.url };
-            }
-            const signedUrl = await this.storage.getSignedDownloadUrl(p.url, 3600);
-            return { url: signedUrl };
-          })
+    // Generate token-based URLs for previews
+    const packsWithUrls = packs.map((pack) => {
+      const previewsWithUrls = pack.previews.map((p) => {
+        // If already a full URL or data URL, return as is
+        if (p.url.startsWith('http') || p.url.startsWith('data:')) {
+          return { url: p.url };
+        }
+        // Generate secure token-based URL
+        const tokenUrl = this.storage.generateMediaUrl(
+          userId,
+          p.id,
+          'preview',
+          pack.id,
+          undefined,
+          'image/webp'
         );
+        return { url: tokenUrl };
+      });
 
-        return {
-          id: pack.id,
-          title: pack.title,
-          description: pack.description,
-          price: pack.price,
-          status: pack.status,
-          createdAt: pack.createdAt,
-          updatedAt: pack.updatedAt,
-          publishedAt: pack.publishedAt,
-          previews: previewsWithUrls,
-          _count: pack._count,
-        };
-      })
-    );
+      return {
+        id: pack.id,
+        title: pack.title,
+        description: pack.description,
+        price: pack.price,
+        status: pack.status,
+        createdAt: pack.createdAt,
+        updatedAt: pack.updatedAt,
+        publishedAt: pack.publishedAt,
+        previews: previewsWithUrls,
+        _count: pack._count,
+      };
+    });
 
     return packsWithUrls;
   }
@@ -116,18 +121,23 @@ export class PacksService {
       throw new NotFoundException('Pack não encontrado');
     }
 
-    // Generate signed URLs for previews
-    const previewsWithUrls = await Promise.all(
-      pack.previews.map(async (preview) => {
-        // If it's already a full URL or data URL, return as is
-        if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
-          return preview;
-        }
-        // Generate signed URL for storage key
-        const signedUrl = await this.storage.getSignedDownloadUrl(preview.url, 3600);
-        return { ...preview, url: signedUrl };
-      })
-    );
+    // Generate token-based URLs for previews
+    const previewsWithUrls = pack.previews.map((preview) => {
+      // If it's already a full URL or data URL, return as is
+      if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
+        return preview;
+      }
+      // Generate secure token-based URL
+      const tokenUrl = this.storage.generateMediaUrl(
+        userId,
+        preview.id,
+        'preview',
+        packId,
+        undefined,
+        'image/webp'
+      );
+      return { ...preview, url: tokenUrl };
+    });
 
     return {
       ...pack,
@@ -281,10 +291,10 @@ export class PacksService {
     contentType: string,
     type: 'preview' | 'file'
   ) {
-    // Verify pack ownership
+    // Verify pack ownership and get user slug
     const pack = await this.prisma.pack.findUnique({
       where: { id: packId, creatorId: userId },
-      include: { previews: true, files: true },
+      include: { previews: true, files: true, creator: { select: { slug: true } } },
     });
 
     if (!pack) {
@@ -312,14 +322,16 @@ export class PacksService {
       );
     }
 
-    // Generate file ID and key
+    // Generate file ID and build new structured key
+    // Format: users/{userId}/{userSlug}/packs/{packId}/{type}s/{fileId}
     const fileId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const key = `packs/${packId}/${type}s/${fileId}`;
+    const userSlug = pack.creator.slug || 'user';
+    const key = this.storage.buildPackFileKey(userId, userSlug, packId, type, fileId);
 
     // Get presigned upload URL
     const uploadUrl = await this.storage.getSignedUploadUrl(key, contentType);
 
-    this.logger.log(`Upload URL requested for pack ${packId}, type: ${type}`);
+    this.logger.log(`Upload URL requested for pack ${packId}, type: ${type}, key: ${key}`);
 
     return { uploadUrl, key, fileId };
   }
@@ -553,10 +565,14 @@ export class PacksService {
       `Download URL requested: user ${userId}, file ${fileId}, count: ${currentCount + 1}/10`
     );
 
-    // Generate signed URL (1 hour expiration)
-    const downloadUrl = await this.storage.getSignedDownloadUrl(
-      file.storageKey,
-      3600
+    // Generate secure token-based URL via Cloudflare Worker
+    const downloadUrl = this.storage.generateMediaUrl(
+      userId,
+      fileId,
+      'file',
+      packId,
+      file.filename,
+      file.mimeType
     );
 
     return downloadUrl;

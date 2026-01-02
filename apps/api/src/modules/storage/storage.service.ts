@@ -8,12 +8,14 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
+import { MediaTokenService } from '../media-token/media-token.service';
 
 @Injectable()
 export class StorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
   private readonly logger = new Logger(StorageService.name);
+  private mediaTokenService?: MediaTokenService;
 
   constructor(private config: ConfigService) {
     const endpoint = this.config.get<string>('R2_ENDPOINT');
@@ -123,5 +125,65 @@ export class StorageService {
 
     await this.client.send(command);
     this.logger.log(`Uploaded file: ${key} (${buffer.length} bytes)`);
+  }
+
+  /**
+   * Set MediaTokenService for late binding (avoids circular dependency)
+   */
+  setMediaTokenService(service: MediaTokenService): void {
+    this.mediaTokenService = service;
+  }
+
+  /**
+   * Generate a secure media URL via Cloudflare Worker
+   * Returns a tokenized URL that hides the actual R2 path
+   */
+  generateMediaUrl(
+    userId: string,
+    resourceId: string,
+    type: 'file' | 'preview' | 'avatar' | 'cover',
+    packId?: string,
+    filename?: string,
+    contentType?: string
+  ): string {
+    if (!this.mediaTokenService) {
+      throw new Error('MediaTokenService not initialized');
+    }
+
+    return this.mediaTokenService.generateMediaUrl(
+      userId,
+      resourceId,
+      type,
+      packId,
+      filename,
+      contentType
+    );
+  }
+
+  /**
+   * Build storage key for user-organized structure
+   * Format: users/{userId}/{userSlug}/{type}/{...}
+   */
+  buildStorageKey(
+    userId: string,
+    userSlug: string,
+    type: 'packs' | 'avatar' | 'cover',
+    subPath: string
+  ): string {
+    return `users/${userId}/${userSlug}/${type}/${subPath}`;
+  }
+
+  /**
+   * Build storage key for pack files
+   * Format: users/{userId}/{userSlug}/packs/{packId}/{fileType}s/{fileId}
+   */
+  buildPackFileKey(
+    userId: string,
+    userSlug: string,
+    packId: string,
+    fileType: 'file' | 'preview',
+    fileId: string
+  ): string {
+    return `users/${userId}/${userSlug}/packs/${packId}/${fileType}s/${fileId}`;
   }
 }

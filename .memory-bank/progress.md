@@ -39,7 +39,9 @@
 - [x] Validação Zod via pipe customizado
 - [x] Webhook signature verification
 - [x] Idempotência de webhooks (StripeEvent)
-- [x] Signed URLs para acesso a arquivos
+- [x] **Cloudflare Worker CDN** - URLs tokenizadas, R2 escondido do frontend
+- [x] **MediaToken Module** - JWT para acesso a mídia
+- [x] **InternalApiGuard** - Protege endpoints internos
 
 ### Frontend (Web)
 
@@ -115,6 +117,15 @@
 - Nenhum bug crítico identificado
 
 ## Histórico de Releases
+
+### v0.4.0 (2025-01-02)
+- **Cloudflare Worker CDN + R2 Security**
+  - Nova estrutura de pastas: `users/{userId}/{username}/packs/{packId}/...`
+  - MediaToken module para gerar/validar JWTs
+  - Worker serve arquivos via proxy seguro
+  - Frontend recebe apenas URLs tokenizadas opacas
+  - InternalApiGuard para endpoints do Worker
+  - Configuração completa para dev e produção
 
 ### v0.3.0 (2025-01-02)
 - **Sistema de Conversão de Mídia (Backend)**

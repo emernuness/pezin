@@ -17,7 +17,9 @@
     "db:reset": "pnpm --filter @pack-do-pezin/api prisma:reset",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "docker:logs": "docker compose logs -f",
+    "worker:dev": "pnpm --filter @pack-do-pezin/worker dev",
+    "worker:deploy": "pnpm --filter @pack-do-pezin/worker deploy"
   },
   "engines": {
     "node": ">=20.0.0",

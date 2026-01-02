@@ -4,17 +4,53 @@
 
 ## Foco de Trabalho Atual
 
-O projeto passou por uma **grande refatoração** (Sprints 1-7) e está com a arquitetura de código muito mais organizada. Recentemente implementamos o **sistema de conversão de mídia** no backend.
+Implementamos a **reorganização do R2 + Cloudflare Worker para segurança de mídia**. Agora todos os arquivos são servidos via Worker com URLs tokenizadas, escondendo completamente a infraestrutura R2 do frontend.
 
 ## Mudanças Recentes
 
-### Commits Recentes
+### Cloudflare Worker + R2 Security (Novo!)
+
+#### Nova Estrutura de Pastas no R2
+```
+users/{userId}/{username}/
+├── packs/{packId}/
+│   ├── files/{fileId}
+│   └── previews/{fileId}
+├── avatar/{timestamp}.{ext}
+└── cover/{timestamp}.{ext}
+```
+
+#### Arquitetura de Segurança
+```
+Frontend ──► Cloudflare Worker ──► R2 Bucket
+              │
+         Valida JWT
+         Resolve path via API
+         Faz proxy do arquivo
+```
+
+- **Frontend NUNCA vê URLs do R2** - apenas tokens opacos
+- URLs no formato: `https://cdn.packdopezin.com/media/{jwt-token}`
+- Token expira em 1 hora (configurável)
+
+#### Novos Módulos/Arquivos
+- `apps/api/src/modules/media-token/` - Gera e valida tokens JWT
+- `apps/api/src/common/guards/internal-api.guard.ts` - Protege API interna
+- `apps/worker/` - Cloudflare Worker completo
+
+#### Configuração
+Novas variáveis de ambiente:
+```env
+MEDIA_TOKEN_SECRET=<256-bit-secret>
+MEDIA_TOKEN_EXPIRES_IN=3600
+CDN_WORKER_URL=http://localhost:8787
+WORKER_INTERNAL_API_KEY=<api-key>
+```
+
+### Commits Anteriores
 - `feat(api): add backend media conversion to WebP/WebM` - Conversão automática de mídia
 - `feat(web): add media upload with WebP conversion and visual previews` - Upload com previews
 - `refactor(web): use shared formatters and constants` - Utilitários compartilhados
-- `refactor(web): cleanup and remove duplicates - Sprint 6` - Limpeza de código
-- `refactor(web): refactor auth forms - Sprint 5` - SignupForm/LoginForm componentizados
-- `refactor(web): refactor profile and dashboard pages - Sprint 4` - Páginas principais
 
 ### Grande Refatoração (Sprints 1-7)
 

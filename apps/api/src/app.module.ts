@@ -12,6 +12,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { MediaModule } from './modules/media/media.module';
+import { MediaTokenModule } from './modules/media-token/media-token.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -59,6 +60,7 @@ import { HealthController } from './modules/health/health.controller';
     ]),
     PrismaModule,
     MediaModule,
+    MediaTokenModule,
     AuthModule,
     StripeModule,
     PacksModule,
