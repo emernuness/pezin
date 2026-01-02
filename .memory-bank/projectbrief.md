@@ -15,7 +15,7 @@
 
 | Métrica | Valor |
 |---------|-------|
-| Taxa da plataforma | 20% sobre cada venda |
+| Taxa da plataforma | 10% sobre cada venda |
 | Repasse ao criador | 80% do valor do pack |
 | Valor mínimo para saque | R$ 50,00 |
 | Prazo anti-fraude | 14 dias após a compra |

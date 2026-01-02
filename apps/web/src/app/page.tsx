@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
   description:
-    "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs. Comece a vender em minutos.",
+    "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs. Comece a vender em minutos.",
   keywords:
     "vender packs, monetizar conteudo, plataforma criadores, venda de fotos, venda de videos",
   metadataBase: new URL("https://packdopezin.com.br"),
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
     description:
-      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs.",
     url: "https://packdopezin.com.br/",
     type: "website",
     siteName: "Pack do Pezin",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   twitter: {
     title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
     description:
-      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs.",
     card: "summary_large_image",
     images: ["/twitter-image.jpg"],
   },

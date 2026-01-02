@@ -12,7 +12,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pack do Pezin — Venda seus Packs de Conteúdo | Cadastro Gratuito",
   description:
-    "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs. Comece a vender em minutos.",
+    "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs. Comece a vender em minutos.",
   keywords:
     "vender packs, monetizar conteúdo, plataforma criadores, venda de fotos, venda de vídeos",
   alternates: {
@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pack do Pezin — Venda seus Packs de Conteúdo | Cadastro Gratuito",
     description:
-      "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+      "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs.",
     url: "https://packdopezin.com.br/",
   },
   twitter: {
     title: "Pack do Pezin — Venda seus Packs de Conteúdo | Cadastro Gratuito",
     description:
-      "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+      "Monetize seu conteúdo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros, controle total sobre seus packs.",
   },
 };
 

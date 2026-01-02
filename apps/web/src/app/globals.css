@@ -67,6 +67,16 @@
     /* cardHover: Slightly elevated */
     --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px
       rgb(0 0 0 / 0.1);
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 9%;
+    --sidebar-primary: 72 100% 50%;
+    --sidebar-primary-foreground: 215 25% 9%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 215 25% 9%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 72 100% 50%;
   }
 
   .dark {
@@ -106,6 +116,16 @@
     --input: 219 22% 31%;
 
     --ring: 72 100% 50%;
+
+    /* Sidebar - Dark Mode */
+    --sidebar-background: 225 28% 14%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 72 100% 50%;
+    --sidebar-primary-foreground: 215 25% 9%;
+    --sidebar-accent: 222 23% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 219 22% 31%;
+    --sidebar-ring: 72 100% 50%;
   }
 }
 

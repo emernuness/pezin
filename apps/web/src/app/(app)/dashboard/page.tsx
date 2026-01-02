@@ -41,37 +41,10 @@ interface DashboardStats {
   pendingBalance: number;
 }
 
-// Layout: Use global background
-function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="w-64 border-r border-border bg-card p-6 hidden md:block">
-        <nav className="space-y-2">
-          <Button
-            variant="ghost"
-            className="w-full justify-start font-medium text-foreground"
-            asChild
-          >
-            <Link href="/dashboard">Visão Geral</Link>
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
-            asChild
-          >
-            <Link href="/dashboard/packs">Meus Packs</Link>
-          </Button>
-        </nav>
-      </aside>
-      <div className="flex-1 p-8 space-y-8">{children}</div>
-    </div>
-  );
-}
-
 // Skeleton loading
 function DashboardSkeleton() {
   return (
-    <DashboardLayout>
+    <div className="flex-1 p-6 md:p-8 space-y-8">
       <Skeleton className="h-10 w-48" />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
@@ -82,7 +55,7 @@ function DashboardSkeleton() {
         <Skeleton className="h-80 rounded-2xl" />
         <Skeleton className="h-80 rounded-2xl" />
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
 
@@ -205,17 +178,17 @@ export default function DashboardPage() {
 
   if (!stats) {
     return (
-      <DashboardLayout>
+      <div className="flex-1 p-6 md:p-8">
         <div className="flex items-center justify-center py-12 text-muted-foreground">
           Erro ao carregar dashboard.
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex items-center justify-between mb-8">
+    <div className="flex-1 p-6 md:p-8 space-y-8">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Dashboard
@@ -451,6 +424,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

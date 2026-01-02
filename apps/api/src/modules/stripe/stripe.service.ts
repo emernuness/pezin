@@ -45,7 +45,7 @@ export class StripeService {
     }
 
     // Calculate fees
-    const platformFee = Math.round(pack.price * 0.2); // 20%
+    const platformFee = Math.round(pack.price * 0.1); // 10%
 
     // Create checkout session
     const session = await this.stripe.checkout.sessions.create({

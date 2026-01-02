@@ -1,6 +1,9 @@
 import Link from "next/link";
 import React from "react";
 
+// Simple SVG placeholder as data URL
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
+
 interface PackCardProps {
   id: string;
   title: string;
@@ -30,7 +33,7 @@ export function PackCard({
       <div className="group relative overflow-hidden rounded-lg bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-cardHover border border-border/50">
         <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
           <img
-            src={imageUrl || "/placeholder-pack.jpg"}
+            src={imageUrl || PLACEHOLDER_IMAGE}
             alt={title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />

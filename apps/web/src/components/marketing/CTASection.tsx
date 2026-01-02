@@ -64,7 +64,7 @@ export function CTASection({
               size="lg"
               variant="outline"
               asChild
-              className="w-full border-[#D4FF00] bg-transparent text-[#D4FF00] hover:bg-[#D4FF00]/10 sm:w-auto"
+              className="w-full border-[#D4FF00] bg-transparent text-[#D4FF00] hover:bg-[#D4FF00]/0 hover:text-white sm:w-auto"
               onClick={handleSecondaryClick}
             >
               <Link href={secondaryCTA.href}>{secondaryCTA.text}</Link>

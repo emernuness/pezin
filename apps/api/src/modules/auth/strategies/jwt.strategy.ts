@@ -24,9 +24,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: true,
         email: true,
         displayName: true,
+        slug: true,
+        bio: true,
+        profileImage: true,
         userType: true,
         emailVerified: true,
         stripeConnected: true,
+        createdAt: true,
       },
     });
 

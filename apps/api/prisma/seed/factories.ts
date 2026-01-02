@@ -304,6 +304,18 @@ export function createPack(
   };
 }
 
+// Generate a simple colored placeholder SVG as data URL
+function generatePlaceholderDataUrl(index: number): string {
+  const colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8B500', '#FF69B4', '#00CED1', '#FFD700', '#9370DB',
+  ];
+  const color = colors[index % colors.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="${color}" width="400" height="400"/><text x="200" y="200" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dominant-baseline="middle">Preview ${index + 1}</text></svg>`;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
 export function createPackPreviews(packId: string, packIndex: number): PackPreviewSeedData[] {
   const previewCount = 3; // Always 3 previews per pack
   const previews: PackPreviewSeedData[] = [];
@@ -312,7 +324,7 @@ export function createPackPreviews(packId: string, packIndex: number): PackPrevi
     const previewIndex = (packIndex * 4 + i) % 40 + 1;
     previews.push({
       packId,
-      url: `previews/preview_${String(previewIndex).padStart(2, '0')}.jpg`,
+      url: generatePlaceholderDataUrl(previewIndex),
       order: i,
     });
   }

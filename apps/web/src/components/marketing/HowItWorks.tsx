@@ -21,8 +21,8 @@ const steps = [
   },
   {
     number: 3,
-    title: "Defina o valor",
-    description: "Você escolhe quanto cobrar. De R$ 9,90 a R$ 500,00.",
+    title: "2. Defina o valor",
+    description: "Você escolhe quanto cobrar. A partir de R$ 19,90.",
   },
   {
     number: 4,

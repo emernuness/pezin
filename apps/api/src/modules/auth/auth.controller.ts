@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Res,
   Req,
@@ -17,6 +18,12 @@ import {
   loginSchema,
   SignUpInput,
   LoginInput,
+  updateProfileSchema,
+  UpdateProfileInput,
+  changePasswordSchema,
+  ChangePasswordInput,
+  updateCreatorProfileSchema,
+  UpdateCreatorProfileInput,
 } from '@pack-do-pezin/shared';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -103,6 +110,69 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: any) {
-    return { user };
+    return this.authService.getMe(user.id);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @CurrentUser() user: any,
+    @Body(new ZodValidationPipe(updateProfileSchema)) dto: UpdateProfileInput
+  ) {
+    return this.authService.updateProfile(user.id, dto);
+  }
+
+  @Patch('creator-profile')
+  @UseGuards(JwtAuthGuard)
+  async updateCreatorProfile(
+    @CurrentUser() user: any,
+    @Body(new ZodValidationPipe(updateCreatorProfileSchema)) dto: UpdateCreatorProfileInput
+  ) {
+    return this.authService.updateCreatorProfile(user.id, dto);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async changePassword(
+    @CurrentUser() user: any,
+    @Body(new ZodValidationPipe(changePasswordSchema)) dto: ChangePasswordInput
+  ) {
+    return this.authService.changePassword(user.id, dto);
+  }
+
+  // Profile Image Upload Endpoints
+  @Post('profile-image/upload-url')
+  @UseGuards(JwtAuthGuard)
+  async getProfileImageUploadUrl(
+    @CurrentUser() user: any,
+    @Body() body: { contentType: string; imageType?: 'profile' | 'cover' }
+  ) {
+    return this.authService.getProfileImageUploadUrl(
+      user.id,
+      body.contentType,
+      body.imageType || 'profile'
+    );
+  }
+
+  @Post('profile-image/confirm')
+  @UseGuards(JwtAuthGuard)
+  async confirmProfileImageUpload(
+    @CurrentUser() user: any,
+    @Body() body: { key: string; imageType?: 'profile' | 'cover' }
+  ) {
+    return this.authService.confirmProfileImageUpload(
+      user.id,
+      body.key,
+      body.imageType || 'profile'
+    );
+  }
+
+  // Email Verification Endpoints
+  @Post('resend-verification')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute
+  async resendVerificationEmail(@CurrentUser() user: any) {
+    return this.authService.resendVerificationEmail(user.id);
   }
 }

@@ -17,14 +17,13 @@ const testimonials = [
   {
     id: 2,
     quote:
-      "O pagamento via Stripe me dá muito mais segurança. Recebo direitinho.",
+      "O sistema de pagamento me dá muito mais segurança. Recebo direitinho.",
     name: "Carlos M.",
     role: "Criador de conteúdo",
   },
   {
     id: 3,
-    quote:
-      "A interface é linda e meus fãs adoraram a facilidade para comprar.",
+    quote: "A interface é linda e meus fãs adoraram a facilidade para comprar.",
     name: "Júlia R.",
     role: "Criadora de conteúdo",
   },
@@ -56,7 +55,7 @@ export function Testimonials() {
             start: "top 80%",
             once: true,
           },
-        }
+        },
       );
     }, sectionRef);
 

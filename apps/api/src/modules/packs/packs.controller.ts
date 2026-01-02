@@ -2,6 +2,8 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -17,12 +19,63 @@ import {
   confirmUploadSchema,
   UploadUrlInput,
   ConfirmUploadInput,
+  createPackSchema,
+  updatePackSchema,
+  CreatePackInput,
+  UpdatePackInput,
 } from '@pack-do-pezin/shared';
 
 @Controller('packs')
 @UseGuards(JwtAuthGuard)
 export class PacksController {
   constructor(private packsService: PacksService) {}
+
+  @Get()
+  async listPacks(@CurrentUser() user: any) {
+    return this.packsService.listPacks(user.id);
+  }
+
+  @Post()
+  async createPack(
+    @Body(new ZodValidationPipe(createPackSchema)) body: CreatePackInput,
+    @CurrentUser() user: any
+  ) {
+    return this.packsService.createPack(
+      user.id,
+      body.title,
+      body.description,
+      body.price
+    );
+  }
+
+  @Get(':id')
+  async getPack(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.packsService.getPackById(id, user.id);
+  }
+
+  @Patch(':id')
+  async updatePack(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updatePackSchema)) body: UpdatePackInput,
+    @CurrentUser() user: any
+  ) {
+    return this.packsService.updatePack(id, user.id, body);
+  }
+
+  @Post(':id/publish')
+  async publishPack(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.packsService.publishPack(id, user.id);
+  }
+
+  @Post(':id/unpublish')
+  async unpublishPack(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.packsService.unpublishPack(id, user.id);
+  }
+
+  @Delete(':id')
+  async deletePack(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.packsService.deletePack(id, user.id);
+  }
 
   @Post(':id/upload-url')
   async getUploadUrl(
@@ -81,5 +134,23 @@ export class PacksController {
     );
 
     return { url };
+  }
+
+  @Delete(':packId/files/:fileId')
+  async deleteFile(
+    @Param('packId') packId: string,
+    @Param('fileId') fileId: string,
+    @CurrentUser() user: any
+  ) {
+    return this.packsService.deleteFile(packId, fileId, user.id);
+  }
+
+  @Delete(':packId/previews/:previewId')
+  async deletePreview(
+    @Param('packId') packId: string,
+    @Param('previewId') previewId: string,
+    @CurrentUser() user: any
+  ) {
+    return this.packsService.deletePreview(packId, previewId, user.id);
   }
 }

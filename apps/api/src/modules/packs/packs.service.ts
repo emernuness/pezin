@@ -33,6 +33,179 @@ export class PacksService {
     private storage: StorageService
   ) {}
 
+  /**
+   * List all packs for a creator
+   */
+  async listPacks(userId: string) {
+    const packs = await this.prisma.pack.findMany({
+      where: { creatorId: userId },
+      include: {
+        previews: {
+          orderBy: { order: 'asc' },
+          take: 1,
+        },
+        _count: {
+          select: { purchases: true, files: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return packs.map((pack) => ({
+      id: pack.id,
+      title: pack.title,
+      description: pack.description,
+      price: pack.price,
+      status: pack.status,
+      createdAt: pack.createdAt,
+      updatedAt: pack.updatedAt,
+      publishedAt: pack.publishedAt,
+      previews: pack.previews.map((p) => ({ url: p.url })),
+      _count: pack._count,
+    }));
+  }
+
+  /**
+   * Create a new pack
+   */
+  async createPack(userId: string, title: string, description?: string, price?: number) {
+    return this.prisma.pack.create({
+      data: {
+        creatorId: userId,
+        title,
+        description: description || null,
+        price: price || 1990, // Default minimum price R$ 19,90
+        status: 'draft',
+      },
+    });
+  }
+
+  /**
+   * Get pack by ID (for owner)
+   */
+  async getPackById(packId: string, userId: string) {
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+      include: {
+        previews: { orderBy: { order: 'asc' } },
+        files: { orderBy: { order: 'asc' } },
+        _count: { select: { purchases: true } },
+      },
+    });
+
+    if (!pack) {
+      throw new NotFoundException('Pack não encontrado');
+    }
+
+    return pack;
+  }
+
+  /**
+   * Update pack details
+   */
+  async updatePack(
+    packId: string,
+    userId: string,
+    data: { title?: string; description?: string; price?: number }
+  ) {
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new NotFoundException('Pack não encontrado');
+    }
+
+    // Validate price range
+    if (data.price !== undefined && data.price < 1990) {
+      throw new BadRequestException('Preço deve ser no mínimo R$ 19,90');
+    }
+
+    return this.prisma.pack.update({
+      where: { id: packId },
+      data: {
+        title: data.title,
+        description: data.description,
+        price: data.price,
+      },
+    });
+  }
+
+  /**
+   * Publish a pack
+   */
+  async publishPack(packId: string, userId: string) {
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new NotFoundException('Pack não encontrado');
+    }
+
+    if (pack.status === 'published') {
+      throw new BadRequestException('Pack já está publicado');
+    }
+
+    // Validate pack before publishing
+    await this.validateForPublish(packId);
+
+    return this.prisma.pack.update({
+      where: { id: packId },
+      data: {
+        status: 'published',
+        publishedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Unpublish a pack
+   */
+  async unpublishPack(packId: string, userId: string) {
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new NotFoundException('Pack não encontrado');
+    }
+
+    return this.prisma.pack.update({
+      where: { id: packId },
+      data: { status: 'unpublished' },
+    });
+  }
+
+  /**
+   * Delete a pack (soft delete if has purchases)
+   */
+  async deletePack(packId: string, userId: string) {
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+      include: { _count: { select: { purchases: true } } },
+    });
+
+    if (!pack) {
+      throw new NotFoundException('Pack não encontrado');
+    }
+
+    // If pack has purchases, soft delete
+    if (pack._count.purchases > 0) {
+      return this.prisma.pack.update({
+        where: { id: packId },
+        data: { status: 'deleted', deletedAt: new Date() },
+      });
+    }
+
+    // No purchases, hard delete
+    await this.prisma.packPreview.deleteMany({ where: { packId } });
+    await this.prisma.packFile.deleteMany({ where: { packId } });
+    await this.prisma.pack.delete({ where: { id: packId } });
+
+    return { deleted: true };
+  }
+
   async validateForPublish(packId: string): Promise<void> {
     const pack = await this.prisma.pack.findUnique({
       where: { id: packId },
@@ -49,8 +222,8 @@ export class PacksService {
       errors.push('Título deve ter no mínimo 3 caracteres');
     }
 
-    if (pack.price < 990 || pack.price > 50000) {
-      errors.push('Preço deve estar entre R$ 9,90 e R$ 500,00');
+    if (pack.price < 1990) {
+      errors.push('Preço deve ser no mínimo R$ 19,90');
     }
 
     if (pack.previews.length === 0) {
@@ -320,5 +493,89 @@ export class PacksService {
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
     tomorrow.setUTCHours(0, 0, 0, 0);
     return Math.ceil((tomorrow.getTime() - now.getTime()) / 1000);
+  }
+
+  /**
+   * Delete a file from pack
+   */
+  async deleteFile(packId: string, fileId: string, userId: string) {
+    // Verify pack ownership
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new ForbiddenException('Pack não encontrado ou você não é o criador');
+    }
+
+    // Only allow deletion if pack is in draft status
+    if (pack.status === 'published') {
+      throw new BadRequestException('Não é possível excluir arquivos de um pack publicado. Despublique primeiro.');
+    }
+
+    // Verify file belongs to pack
+    const file = await this.prisma.packFile.findFirst({
+      where: { id: fileId, packId },
+    });
+
+    if (!file) {
+      throw new NotFoundException('Arquivo não encontrado');
+    }
+
+    // Delete from storage (if implemented)
+    try {
+      await this.storage.deleteFile(file.storageKey);
+    } catch {
+      this.logger.warn(`Failed to delete file from storage: ${file.storageKey}`);
+    }
+
+    // Delete from database
+    await this.prisma.packFile.delete({ where: { id: fileId } });
+
+    this.logger.log(`File ${fileId} deleted from pack ${packId}`);
+    return { deleted: true };
+  }
+
+  /**
+   * Delete a preview from pack
+   */
+  async deletePreview(packId: string, previewId: string, userId: string) {
+    // Verify pack ownership
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new ForbiddenException('Pack não encontrado ou você não é o criador');
+    }
+
+    // Only allow deletion if pack is in draft status
+    if (pack.status === 'published') {
+      throw new BadRequestException('Não é possível excluir previews de um pack publicado. Despublique primeiro.');
+    }
+
+    // Verify preview belongs to pack
+    const preview = await this.prisma.packPreview.findFirst({
+      where: { id: previewId, packId },
+    });
+
+    if (!preview) {
+      throw new NotFoundException('Preview não encontrado');
+    }
+
+    // Delete from storage if it's a storage URL (not data URL)
+    if (!preview.url.startsWith('data:')) {
+      try {
+        await this.storage.deleteFile(preview.url);
+      } catch {
+        this.logger.warn(`Failed to delete preview from storage: ${preview.url}`);
+      }
+    }
+
+    // Delete from database
+    await this.prisma.packPreview.delete({ where: { id: previewId } });
+
+    this.logger.log(`Preview ${previewId} deleted from pack ${packId}`);
+    return { deleted: true };
   }
 }

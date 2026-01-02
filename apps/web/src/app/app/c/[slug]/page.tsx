@@ -4,6 +4,9 @@ import { api } from "@/services/api";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+// Simple SVG placeholder as data URL
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
+
 interface CreatorProfileProps {
   params: {
     slug: string;
@@ -106,7 +109,7 @@ export default async function CreatorPage({ params }: CreatorProfileProps) {
               id={pack.id}
               title={pack.title}
               price={pack.price}
-              imageUrl={pack.previews?.[0]?.url || "/placeholder-pack.jpg"}
+              imageUrl={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE}
               creatorName={creator.displayName}
               creatorSlug={creator.slug}
             />

@@ -1,6 +1,7 @@
 import { Breadcrumb } from "@/components/marketing/Breadcrumb";
 import { Container } from "@/components/marketing";
 import { ContactForm } from "@/components/marketing/ContactForm";
+import { MiniHero } from "@/components/marketing/MiniHero";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -32,18 +33,12 @@ export default function ContatoPage() {
   return (
     <>
       <Breadcrumb items={breadcrumbItems} />
-      <section className="bg-[#0A0A0A] py-20 md:py-28">
-        <Container className="text-center">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl">
-            Fale Conosco
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-[#A1A1A1]">
-            Dúvidas, sugestões ou problemas? Estamos aqui para ajudar.
-          </p>
-        </Container>
-      </section>
+      <MiniHero
+        title="Fale Conosco"
+        description="Dúvidas, sugestões ou problemas? Estamos aqui para ajudar."
+      />
 
-      <section className="bg-[#0A0A0A] pb-20 md:pb-28">
+      <section className="bg-[#0A0A0A] py-20 md:py-28">
         <Container>
           <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-5">
             <div className="lg:col-span-3">

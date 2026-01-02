@@ -36,6 +36,23 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
+#### Configurando Webhooks Localmente (Stripe CLI)
+
+Para testar o recebimento de pagamentos localmente, você deve usar o **Stripe CLI**:
+
+1. **Inicie a escuta dos eventos:**
+   ```bash
+   stripe listen --forward-to localhost:3001/stripe/webhook
+   ```
+2. **Obtenha o Webhook Secret:**
+   O comando acima gerará um código começando com `whsec_`. Copie este valor e cole na variável `STRIPE_WEBHOOK_SECRET` no seu arquivo `apps/api/.env`.
+
+3. **Dispare um evento de teste (opcional):**
+   Em outro terminal, você pode simular uma compra concluída:
+   ```bash
+   stripe trigger checkout.session.completed
+   ```
+
 ### 3. Iniciar com Docker Compose
 
 ```bash

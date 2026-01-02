@@ -131,4 +131,38 @@ export class DashboardService {
       amount,
     }));
   }
+
+  async getWithdrawals(creatorId: string) {
+    return this.prisma.withdrawal.findMany({
+      where: { creatorId },
+      orderBy: { requestedAt: 'desc' },
+      take: 20,
+    });
+  }
+
+  async requestWithdrawal(creatorId: string, amount: number) {
+    // With Stripe Connect Destination Charges, money is already in the creator's
+    // Stripe account. Our withdrawal system tracks our internal 14-day anti-fraud
+    // hold period. Once available, the money is in their Stripe balance and will
+    // be paid out to their bank according to their payout schedule.
+    //
+    // We mark the withdrawal as "completed" immediately because:
+    // 1. The funds are already in their Stripe Connected Account
+    // 2. Stripe handles the actual payout to their bank automatically
+    // 3. Our withdrawal is just an internal tracking mechanism
+
+    const withdrawal = await this.prisma.withdrawal.create({
+      data: {
+        creatorId,
+        amount,
+        status: 'completed',
+        processedAt: new Date(),
+      },
+    });
+
+    return {
+      withdrawal,
+      message: 'Saque processado com sucesso! O valor será depositado na sua conta bancária de acordo com o cronograma de pagamentos do Stripe.',
+    };
+  }
 }

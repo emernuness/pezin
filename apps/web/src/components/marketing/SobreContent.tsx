@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Container, CTASection, SectionHeader } from "@/components/marketing";
+import { MiniHero } from "@/components/marketing/MiniHero";
 import { trackCTAClick } from "@/lib/analytics";
 import { getAnimationDuration, gsap, ScrollTrigger } from "@/lib/gsap";
 import Link from "next/link";
@@ -43,7 +44,6 @@ const notForCreators = [
 ];
 
 export function SobreContent() {
-  const heroRef = useRef<HTMLElement>(null);
   const missionRef = useRef<HTMLElement>(null);
   const forWhoRef = useRef<HTMLElement>(null);
   const valuesRef = useRef<HTMLElement>(null);
@@ -53,26 +53,6 @@ export function SobreContent() {
     if (duration === 0) return;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".hero-content",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration, ease: "power2.out" }
-      );
-
-      gsap.fromTo(
-        ".mission-content",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration,
-          scrollTrigger: {
-            trigger: missionRef.current,
-            start: "top 80%",
-            once: true,
-          },
-        }
-      );
 
       gsap.fromTo(
         ".for-who-lists",
@@ -118,46 +98,10 @@ export function SobreContent() {
 
   return (
     <>
-      <section
-        ref={heroRef}
-        className="relative overflow-hidden bg-[#0A0A0A] py-20 md:py-32"
-      >
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 0%, rgba(212, 255, 0, 0.08) 0%, transparent 50%)",
-          }}
-        />
-        <Container className="hero-content relative z-10 text-center">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-[56px]">
-            Criado para criadores
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-[#A1A1A1] md:text-xl">
-            O Pack do Pezin nasceu para simplificar a vida de quem produz
-            conteúdo e quer monetizar com dignidade, segurança e
-            profissionalismo.
-          </p>
-        </Container>
-      </section>
-
-      <section ref={missionRef} className="bg-[#141414] py-20 md:py-28">
-        <Container>
-          <div className="mission-content mx-auto max-w-3xl text-center">
-            <SectionHeader title="Nossa missão" className="mb-8" />
-            <p className="text-lg text-[#A1A1A1]">
-              Acreditamos que criadores de conteúdo merecem uma plataforma que
-              respeite seu trabalho. Uma ferramenta simples, transparente e
-              justa — onde você está no controle.
-            </p>
-            <p className="mt-6 text-lg text-[#A1A1A1]">
-              O Pack do Pezin existe para eliminar barreiras. Sem taxas de
-              entrada. Sem burocracia. Sem complicação. Apenas você, seu
-              conteúdo e seus fãs.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <MiniHero
+        title="Sobre a plataforma"
+        description="Criado para criadores que querem monetizar com simplicidade e profissionalismo."
+      />
 
       <section ref={forWhoRef} className="bg-[#0A0A0A] py-20 md:py-28">
         <Container>
@@ -236,7 +180,7 @@ export function SobreContent() {
 
       <section ref={valuesRef} className="bg-[#141414] py-20 md:py-28">
         <Container>
-          <SectionHeader title="O que acreditamos" />
+          <SectionHeader title="O que oferecemos" />
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {values.map((value) => (

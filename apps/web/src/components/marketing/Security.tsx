@@ -14,7 +14,7 @@ const securityPoints = [
     description: "Cada compra gera um link único. Só quem pagou acessa.",
   },
   {
-    title: "Pagamentos via Stripe",
+    title: "Pagamentos Seguros",
     description: "Processamento seguro com criptografia de ponta a ponta.",
   },
   {
@@ -27,7 +27,8 @@ const securityPoints = [
   },
   {
     title: "Hospedagem segura",
-    description: "Infraestrutura profissional com CDN Cloudflare.",
+    description:
+      "Infraestrutura profissional com CDN global de alta performance.",
   },
 ];
 
@@ -57,7 +58,7 @@ export function Security() {
             start: "top 80%",
             once: true,
           },
-        }
+        },
       );
     }, sectionRef);
 
@@ -142,7 +143,9 @@ export function Security() {
                       />
                     </svg>
                   </div>
-                  <p className="text-sm text-[#A1A1A1]">Placeholder de imagem</p>
+                  <p className="text-sm text-[#A1A1A1]">
+                    Placeholder de imagem
+                  </p>
                   <p className="text-xs text-[#A1A1A1]">600x400px</p>
                   <p className="mt-2 text-xs text-[#D4FF00]">
                     Ilustração de segurança

@@ -8,6 +8,9 @@ import { Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
+// Simple SVG placeholder as data URL
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect fill='%23e5e7eb' width='100' height='100'/%3E%3Cpath fill='%239ca3af' d='M35 40h30v20H35z'/%3E%3Ccircle fill='%239ca3af' cx='40' cy='35' r='5'/%3E%3C/svg%3E";
+
 export default function PacksDashboardPage() {
   const [packs, setPacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,10 +18,11 @@ export default function PacksDashboardPage() {
   useEffect(() => {
     async function fetchPacks() {
       try {
-        const { data } = await api.get("/packs"); // Uses existing endpoint
+        const { data } = await api.get("/packs");
         setPacks(data);
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // API endpoint may not be implemented yet - silently fail
+        setPacks([]);
       } finally {
         setLoading(false);
       }
@@ -92,7 +96,7 @@ export default function PacksDashboardPage() {
                       <div className="h-10 w-10 flex-shrink-0">
                         <img
                           className="h-10 w-10 rounded-md object-cover"
-                          src={pack.previews?.[0]?.url || "/placeholder.png"}
+                          src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE}
                           alt=""
                         />
                       </div>

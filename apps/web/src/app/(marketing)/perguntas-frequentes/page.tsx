@@ -1,6 +1,7 @@
 import { Breadcrumb } from "@/components/marketing/Breadcrumb";
 import { Container, CTASection } from "@/components/marketing";
 import { FAQAccordion } from "@/components/marketing/FAQAccordion";
+import { MiniHero } from "@/components/marketing/MiniHero";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -59,7 +60,7 @@ const faqCategories = [
       {
         id: "price-range",
         question: "Qual o preço mínimo e máximo de um pack?",
-        answer: "Você pode definir valores de R$ 9,90 até R$ 500,00 por pack.",
+        answer: "Você pode definir valores a partir de R$ 19,90 por pack. Não há limite máximo de preço.",
       },
       {
         id: "files-per-pack",
@@ -81,13 +82,13 @@ const faqCategories = [
         id: "platform-fees",
         question: "Quais são as taxas da plataforma?",
         answer:
-          "A plataforma cobra uma taxa de 2,5% sobre o valor do pack + R$ 0,99 fixo por transação. Essa taxa é descontada automaticamente de cada venda. Não há taxas para criar conta, cadastrar packs ou manter sua conta ativa.",
+          "A plataforma cobra uma taxa de 10% sobre o valor do pack. Essa taxa é descontada automaticamente de cada venda. Não há taxas para criar conta, cadastrar packs ou manter sua conta ativa.",
       },
       {
         id: "how-receive",
         question: "Como recebo meus pagamentos?",
         answer:
-          "Os pagamentos são processados via Stripe. Você conecta sua conta Stripe ao Pack do Pezin e recebe os valores diretamente.",
+          "Os pagamentos são processados de forma segura. Você conecta sua conta bancária ao Pack do Pezin e recebe os valores diretamente.",
       },
       {
         id: "time-to-available",
@@ -155,7 +156,7 @@ const faqCategories = [
         id: "payment-security",
         question: "O pagamento é seguro?",
         answer:
-          "Sim. Todos os pagamentos são processados pelo Stripe, líder mundial em processamento de pagamentos, com criptografia de ponta a ponta.",
+          "Sim. Todos os pagamentos são processados por uma instituição de pagamentos líder mundial, com criptografia de ponta a ponta.",
       },
     ],
   },
@@ -200,13 +201,16 @@ const faqSchema = {
         "@type": "Answer",
         text: item.answer,
       },
-    }))
+    })),
   ),
 };
 
 const breadcrumbItems = [
   { name: "Home", url: "https://packdopezin.com.br" },
-  { name: "Perguntas Frequentes", url: "https://packdopezin.com.br/perguntas-frequentes" },
+  {
+    name: "Perguntas Frequentes",
+    url: "https://packdopezin.com.br/perguntas-frequentes",
+  },
 ];
 
 export default function FAQPage() {
@@ -218,18 +222,12 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <section className="bg-[#0A0A0A] py-20 md:py-28">
-        <Container className="text-center">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl">
-            Perguntas Frequentes
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-[#A1A1A1]">
-            Tudo o que você precisa saber sobre o Pack do Pezin em um só lugar.
-          </p>
-        </Container>
-      </section>
+      <MiniHero
+        title="Perguntas Frequentes"
+        description="Tudo o que você precisa saber sobre o Pack do Pezin em um só lugar."
+      />
 
-      <section className="bg-[#0A0A0A] pb-20 md:pb-28">
+      <section className="bg-[#0A0A0A] py-20 md:py-28">
         <Container className="max-w-3xl">
           <FAQAccordion categories={faqCategories} />
         </Container>

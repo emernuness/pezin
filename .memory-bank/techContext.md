@@ -144,7 +144,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 - Validação: MIME type + magic bytes
 
 ### Financeiro
-- Preço: R$ 9,90 a R$ 500,00 (990 a 50000 centavos)
+- Preço: R$ 19,90 - sem limite máximo (mínimo 1990 centavos)
 - Saque mínimo: R$ 50,00
 - Período anti-fraude: 14 dias
 

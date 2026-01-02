@@ -68,6 +68,7 @@ describe('AuthService', () => {
       const signUpDto = {
         email: 'test@example.com',
         password: 'Test1234',
+        confirmPassword: 'Test1234',
         birthDate: '1990-01-01',
         userType: 'consumer' as const,
         acceptTerms: true as const,
@@ -90,6 +91,7 @@ describe('AuthService', () => {
       const signUpDto = {
         email: 'existing@example.com',
         password: 'Test1234',
+        confirmPassword: 'Test1234',
         birthDate: '1990-01-01',
         userType: 'consumer' as const,
         acceptTerms: true as const,

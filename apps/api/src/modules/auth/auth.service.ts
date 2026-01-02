@@ -10,12 +10,21 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import {
   SignUpInput,
   LoginInput,
   AuthResponse,
   AuthTokens,
+  UpdateProfileInput,
+  ChangePasswordInput,
+  UpdateCreatorProfileInput,
+  User,
+  UserAddress,
 } from '@pack-do-pezin/shared';
+
+// Allowed image types for profile
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 @Injectable()
 export class AuthService {
@@ -24,7 +33,8 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private config: ConfigService
+    private config: ConfigService,
+    private storage: StorageService
   ) {}
 
   async signUp(dto: SignUpInput): Promise<{ message: string }> {
@@ -109,15 +119,7 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.generateTokens(user.id);
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        userType: user.userType,
-        emailVerified: user.emailVerified,
-        stripeConnected: user.stripeConnected,
-        createdAt: user.createdAt,
-      },
+      user: this.formatUser(user),
       accessToken,
       refreshToken,
     };
@@ -174,6 +176,18 @@ export class AuthService {
     }
 
     return { message: 'Logout realizado com sucesso' };
+  }
+
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    return { user: this.formatUser(user) };
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
@@ -266,5 +280,257 @@ export class AuthService {
       default:
         throw new Error('Invalid expiration time format');
     }
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileInput) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        displayName: dto.displayName,
+        bio: dto.bio,
+      },
+    });
+
+    this.logger.log(`Profile updated for user: ${user.email}`);
+
+    return { user: this.formatUser(user) };
+  }
+
+  async updateCreatorProfile(userId: string, dto: UpdateCreatorProfileInput) {
+    // Check if slug is being changed and if it's already taken
+    if (dto.slug) {
+      const existingSlug = await this.prisma.user.findFirst({
+        where: {
+          slug: dto.slug,
+          id: { not: userId },
+        },
+      });
+
+      if (existingSlug) {
+        throw new ConflictException('Este slug já está em uso');
+      }
+    }
+
+    // Check if CPF is being changed and if it's already taken
+    if (dto.cpf) {
+      const cleanedCpf = dto.cpf.replace(/\D/g, '');
+      const existingCpf = await this.prisma.user.findFirst({
+        where: {
+          cpf: cleanedCpf,
+          id: { not: userId },
+        },
+      });
+
+      if (existingCpf) {
+        throw new ConflictException('Este CPF já está cadastrado');
+      }
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        displayName: dto.displayName,
+        bio: dto.bio,
+        slug: dto.slug,
+        fullName: dto.fullName,
+        cpf: dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined,
+        phone: dto.phone,
+        ...(dto.address && {
+          addressZipCode: dto.address.zipCode,
+          addressStreet: dto.address.street,
+          addressNumber: dto.address.number,
+          addressComplement: dto.address.complement,
+          addressNeighborhood: dto.address.neighborhood,
+          addressCity: dto.address.city,
+          addressState: dto.address.state,
+        }),
+      },
+    });
+
+    this.logger.log(`Creator profile updated for user: ${user.email}`);
+
+    return { user: this.formatUser(user) };
+  }
+
+  private formatUser(user: any): User {
+    const address: UserAddress | null =
+      user.addressZipCode || user.addressStreet
+        ? {
+            zipCode: user.addressZipCode,
+            street: user.addressStreet,
+            number: user.addressNumber,
+            complement: user.addressComplement,
+            neighborhood: user.addressNeighborhood,
+            city: user.addressCity,
+            state: user.addressState,
+          }
+        : null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      slug: user.slug,
+      bio: user.bio,
+      profileImage: user.profileImage,
+      coverImage: user.coverImage,
+      birthDate: user.birthDate,
+      userType: user.userType,
+      emailVerified: user.emailVerified,
+      stripeConnected: user.stripeConnected,
+      createdAt: user.createdAt,
+      fullName: user.fullName,
+      cpf: user.cpf,
+      phone: user.phone,
+      address,
+    };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new BadRequestException('Senha atual incorreta');
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 12);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    this.logger.log(`Password changed for user: ${user.email}`);
+
+    return { message: 'Senha alterada com sucesso' };
+  }
+
+  // Profile Image Upload Methods
+  async getProfileImageUploadUrl(
+    userId: string,
+    contentType: string,
+    imageType: 'profile' | 'cover' = 'profile'
+  ) {
+    if (!ALLOWED_IMAGE_TYPES.includes(contentType)) {
+      throw new BadRequestException(
+        'Tipo de arquivo não permitido. Use JPEG, PNG ou WebP.'
+      );
+    }
+
+    const extension = contentType.split('/')[1];
+    const key = `users/${userId}/${imageType}-${Date.now()}.${extension}`;
+
+    const uploadUrl = await this.storage.getSignedUploadUrl(key, contentType);
+
+    this.logger.log(`Generated upload URL for ${imageType} image: ${userId}`);
+
+    return { uploadUrl, key };
+  }
+
+  async confirmProfileImageUpload(
+    userId: string,
+    key: string,
+    imageType: 'profile' | 'cover' = 'profile'
+  ) {
+    // Verify the key belongs to this user
+    if (!key.startsWith(`users/${userId}/`)) {
+      throw new BadRequestException('Chave de arquivo inválida');
+    }
+
+    // Get the public URL for the image
+    const cdnUrl = this.config.get<string>('R2_PUBLIC_URL');
+    const imageUrl = cdnUrl ? `${cdnUrl}/${key}` : key;
+
+    // Get old image key to delete later
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { profileImage: true, coverImage: true },
+    });
+
+    // Update user with new image
+    const updateData =
+      imageType === 'profile'
+        ? { profileImage: imageUrl }
+        : { coverImage: imageUrl };
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    // Delete old image if it exists and is stored in R2
+    const oldImage =
+      imageType === 'profile' ? user?.profileImage : user?.coverImage;
+    if (oldImage && oldImage.includes(`users/${userId}/`)) {
+      try {
+        const oldKey = oldImage.split('/').slice(-3).join('/');
+        await this.storage.deleteFile(oldKey);
+        this.logger.log(`Deleted old ${imageType} image: ${oldKey}`);
+      } catch (error) {
+        this.logger.warn(`Failed to delete old ${imageType} image`, error);
+      }
+    }
+
+    this.logger.log(`Updated ${imageType} image for user: ${userId}`);
+
+    return { user: this.formatUser(updatedUser) };
+  }
+
+  // Email Verification Methods
+  async resendVerificationEmail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email já verificado');
+    }
+
+    // Generate new verification token
+    const verificationToken = randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        verificationToken,
+        verificationTokenExpires,
+      },
+    });
+
+    // TODO: Send email with verification link
+    // For now, log the token (in production, send email)
+    const webUrl = this.config.get<string>('WEB_URL');
+    const verificationUrl = `${webUrl}/verify-email?token=${verificationToken}`;
+
+    this.logger.log(`Verification email resent for: ${user.email}`);
+    this.logger.debug(`Verification URL: ${verificationUrl}`);
+
+    // In development, return the token for testing
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        message: 'Email de verificação reenviado!',
+        verificationUrl, // Only in development
+      };
+    }
+
+    return { message: 'Email de verificação reenviado!' };
   }
 }

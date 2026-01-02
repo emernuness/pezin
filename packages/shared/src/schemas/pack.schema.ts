@@ -14,10 +14,10 @@ export const createPackSchema = z.object({
     .string()
     .max(1000, 'Descrição deve ter no máximo 1000 caracteres')
     .optional(),
-  price: z
+  price: z.coerce
     .number()
-    .min(990, 'Preço mínimo é R$ 9,90')
-    .max(50000, 'Preço máximo é R$ 500,00'),
+    .int()
+    .min(1990, 'Preço mínimo é R$ 19,90'),
 });
 
 export const updatePackSchema = createPackSchema.partial();
@@ -60,7 +60,7 @@ export const publicPacksQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(12),
   search: z.string().optional(),
   minPrice: z.coerce.number().min(0).optional(),
-  maxPrice: z.coerce.number().max(50000).optional(),
+  maxPrice: z.coerce.number().optional(),
   sort: z.enum(['recent', 'price_asc', 'price_desc', 'popular']).default('recent'),
   creatorId: z.string().cuid().optional(),
 });

@@ -45,6 +45,20 @@ model User {
   userType      UserType
   emailVerified Boolean  @default(false)
 
+  // Personal data (required for creators to receive payments)
+  fullName      String?  // Legal name for documents
+  cpf           String?  @unique // Brazilian CPF (required for Stripe Connect BR)
+  phone         String?  // Phone number with country code
+
+  // Address (required for Stripe Connect)
+  addressZipCode      String?
+  addressStreet       String?
+  addressNumber       String?
+  addressComplement   String?
+  addressNeighborhood String?
+  addressCity         String?
+  addressState        String?
+
   // Stripe Connect (for creators)
   stripeAccountId String? @unique
   stripeConnected Boolean @default(false)
@@ -67,6 +81,7 @@ model User {
   @@index([email])
   @@index([userType])
   @@index([slug])
+  @@index([cpf])
 }
 
 model RefreshToken {

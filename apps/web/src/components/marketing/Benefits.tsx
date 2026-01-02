@@ -16,22 +16,20 @@ const benefits = [
       "Criar conta e cadastrar packs é 100% gratuito. Você só paga quando vende.",
   },
   {
-    title: "Stripe, o padrão mundial",
+    title: "Pagamentos Globais",
     subtitle: "Pagamentos seguros",
     description:
-      "Pagamentos processados pelo Stripe, usado por milhões de empresas no mundo.",
+      "Pagamentos processados por líder de mercado, usado por milhões de empresas no mundo.",
   },
   {
     title: "Saldo liberado em dias",
     subtitle: "Receba rápido",
-    description:
-      "Acompanhe seus ganhos e solicite saque quando quiser.",
+    description: "Acompanhe seus ganhos e solicite saque quando quiser.",
   },
   {
     title: "Seus preços, suas regras",
     subtitle: "Controle total",
-    description:
-      "Defina valores, edite packs, gerencie tudo do seu jeito.",
+    description: "Defina valores, edite packs, gerencie tudo do seu jeito.",
   },
   {
     title: "Impressione seus fãs",
@@ -72,7 +70,7 @@ export function Benefits() {
             start: "top 80%",
             once: true,
           },
-        }
+        },
       );
     }, sectionRef);
 
@@ -91,10 +89,7 @@ export function Benefits() {
           subtitle="Tudo o que você precisa para monetizar seu conteúdo em um só lugar."
         />
 
-        <div
-          ref={gridRef}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-        >
+        <div ref={gridRef} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {benefits.map((benefit) => (
             <div
               key={benefit.title}
