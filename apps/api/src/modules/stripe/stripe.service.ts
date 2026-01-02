@@ -44,8 +44,8 @@ export class StripeService {
       throw new BadRequestException('Criador não conectou Stripe');
     }
 
-    // Calculate fees
-    const platformFee = Math.round(pack.price * 0.1); // 10%
+    // Calculate fees (20% platform, 80% creator as per PRD)
+    const platformFee = Math.round(pack.price * 0.2); // 20%
 
     // Create checkout session
     const session = await this.stripe.checkout.sessions.create({

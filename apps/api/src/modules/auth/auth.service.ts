@@ -597,9 +597,12 @@ export class AuthService {
     const verificationUrl = `${webUrl}/verify-email?token=${verificationToken}`;
 
     this.logger.log(`Verification email resent for: ${user.email}`);
-    this.logger.debug(`Verification URL: ${verificationUrl}`);
+    // SECURITY: Don't log verification URLs in production to prevent token leakage
+    if (process.env.NODE_ENV === 'development') {
+      this.logger.debug(`[DEV ONLY] Verification URL: ${verificationUrl}`);
+    }
 
-    // In development, return the token for testing
+    // In development, return the URL for testing
     if (process.env.NODE_ENV === 'development') {
       return {
         message: 'Email de verificação reenviado!',
