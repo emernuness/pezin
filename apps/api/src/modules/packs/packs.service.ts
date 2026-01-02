@@ -40,7 +40,7 @@ export class PacksService {
    */
   async listPacks(userId: string) {
     const packs = await this.prisma.pack.findMany({
-      where: { creatorId: userId },
+      where: { creatorId: userId, deletedAt: null },
       include: {
         previews: {
           orderBy: { order: 'asc' },
@@ -53,38 +53,47 @@ export class PacksService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Generate token-based URLs for previews
-    const packsWithUrls = packs.map((pack) => {
-      const previewsWithUrls = pack.previews.map((p) => {
-        // If already a full URL or data URL, return as is
-        if (p.url.startsWith('http') || p.url.startsWith('data:')) {
-          return { url: p.url };
-        }
-        // Generate secure token-based URL
-        const tokenUrl = this.storage.generateMediaUrl(
-          userId,
-          p.id,
-          'preview',
-          pack.id,
-          undefined,
-          'image/webp'
+    // Generate URLs for previews
+    const packsWithUrls = await Promise.all(
+      packs.map(async (pack) => {
+        const previewsWithUrls = await Promise.all(
+          pack.previews.map(async (p) => {
+            // If already a full URL or data URL, return as is
+            if (p.url.startsWith('http') || p.url.startsWith('data:')) {
+              return { url: p.url };
+            }
+            // In development, use direct presigned URLs from R2
+            if (this.storage.isDevMode()) {
+              const directUrl = await this.storage.generateDirectUrl(p.url);
+              return { url: directUrl };
+            }
+            // In production, generate secure token-based URL
+            const tokenUrl = this.storage.generateMediaUrl(
+              userId,
+              p.id,
+              'preview',
+              pack.id,
+              undefined,
+              'image/webp'
+            );
+            return { url: tokenUrl };
+          })
         );
-        return { url: tokenUrl };
-      });
 
-      return {
-        id: pack.id,
-        title: pack.title,
-        description: pack.description,
-        price: pack.price,
-        status: pack.status,
-        createdAt: pack.createdAt,
-        updatedAt: pack.updatedAt,
-        publishedAt: pack.publishedAt,
-        previews: previewsWithUrls,
-        _count: pack._count,
-      };
-    });
+        return {
+          id: pack.id,
+          title: pack.title,
+          description: pack.description,
+          price: pack.price,
+          status: pack.status,
+          createdAt: pack.createdAt,
+          updatedAt: pack.updatedAt,
+          publishedAt: pack.publishedAt,
+          previews: previewsWithUrls,
+          _count: pack._count,
+        };
+      })
+    );
 
     return packsWithUrls;
   }
@@ -109,7 +118,7 @@ export class PacksService {
    */
   async getPackById(packId: string, userId: string) {
     const pack = await this.prisma.pack.findFirst({
-      where: { id: packId, creatorId: userId },
+      where: { id: packId, creatorId: userId, deletedAt: null },
       include: {
         previews: { orderBy: { order: 'asc' } },
         files: { orderBy: { order: 'asc' } },
@@ -121,27 +130,56 @@ export class PacksService {
       throw new NotFoundException('Pack não encontrado');
     }
 
-    // Generate token-based URLs for previews
-    const previewsWithUrls = pack.previews.map((preview) => {
-      // If it's already a full URL or data URL, return as is
-      if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
-        return preview;
-      }
-      // Generate secure token-based URL
-      const tokenUrl = this.storage.generateMediaUrl(
-        userId,
-        preview.id,
-        'preview',
-        packId,
-        undefined,
-        'image/webp'
-      );
-      return { ...preview, url: tokenUrl };
-    });
+    // Generate URLs for previews
+    const previewsWithUrls = await Promise.all(
+      pack.previews.map(async (preview) => {
+        // If it's already a full URL or data URL, return as is
+        if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
+          return preview;
+        }
+        // In development, use direct presigned URLs from R2
+        if (this.storage.isDevMode()) {
+          const directUrl = await this.storage.generateDirectUrl(preview.url);
+          return { ...preview, url: directUrl };
+        }
+        // In production, generate secure token-based URL
+        const tokenUrl = this.storage.generateMediaUrl(
+          userId,
+          preview.id,
+          'preview',
+          packId,
+          undefined,
+          'image/webp'
+        );
+        return { ...preview, url: tokenUrl };
+      })
+    );
+
+    // Generate URLs for files (for previews in the editor)
+    const filesWithUrls = await Promise.all(
+      pack.files.map(async (file) => {
+        // In development, add preview URL for files
+        if (this.storage.isDevMode() && file.storageKey) {
+          const previewUrl = await this.storage.generateDirectUrl(file.storageKey);
+          return { ...file, previewUrl };
+        }
+        // In production, generate token-based preview URL
+        const previewUrl = this.storage.generateMediaUrl(
+          userId,
+          file.id,
+          'file',
+          packId,
+          file.filename,
+          file.mimeType
+        );
+        return { ...file, previewUrl };
+      })
+    );
 
     return {
       ...pack,
       previews: previewsWithUrls,
+      files: filesWithUrls,
     };
   }
 

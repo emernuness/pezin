@@ -5,10 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MediaUploader } from "@/components/forms";
 import { api } from "@/services/api";
 import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
-import { ArrowLeft, Trash2, X, FileVideo, FileImage } from "lucide-react";
+import { ArrowLeft, Trash2, X, FileVideo, FileImage, Play, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
@@ -26,6 +37,7 @@ interface PackFile {
   filename: string;
   size: number;
   mimeType: string;
+  previewUrl?: string;
 }
 
 interface PackPreview {
@@ -46,17 +58,31 @@ interface Pack {
   };
 }
 
+// Lightbox media item type
+interface LightboxItem {
+  url: string;
+  type: "image" | "video";
+  title?: string;
+}
+
 export default function EditPackPage({ params }: EditPackPageProps) {
   const router = useRouter();
   const [pack, setPack] = useState<Pack | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deletingPack, setDeletingPack] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxItems, setLightboxItems] = useState<LightboxItem[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Refresh pack data
   const refreshPack = useCallback(async () => {
@@ -134,6 +160,27 @@ export default function EditPackPage({ params }: EditPackPageProps) {
       await refreshPack();
     } catch {
       toast.error("Erro ao despublicar pack");
+    }
+  };
+
+  const handleDeletePack = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeletePack = async () => {
+    const hasPurchases = (pack?._count?.purchases ?? 0) > 0;
+
+    setDeletingPack(true);
+    setDeleteDialogOpen(false);
+    try {
+      await api.delete(`/packs/${params.id}`);
+      toast.success(hasPurchases ? "Pack arquivado com sucesso" : "Pack excluído com sucesso");
+      router.push("/app/dashboard/packs");
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || "Erro ao excluir pack");
+    } finally {
+      setDeletingPack(false);
     }
   };
 
@@ -219,6 +266,46 @@ export default function EditPackPage({ params }: EditPackPageProps) {
 
   const isImage = (mimeType: string) => mimeType.startsWith("image/");
   const isVideo = (mimeType: string) => mimeType.startsWith("video/");
+
+  // Open lightbox with files
+  const openFileLightbox = (index: number) => {
+    if (!pack) return;
+    const items: LightboxItem[] = pack.files
+      .filter((f) => f.previewUrl)
+      .map((f) => ({
+        url: f.previewUrl!,
+        type: isVideo(f.mimeType) ? "video" : "image",
+        title: f.filename,
+      }));
+    if (items.length > 0) {
+      setLightboxItems(items);
+      setLightboxIndex(index);
+      setLightboxOpen(true);
+    }
+  };
+
+  // Open lightbox with previews
+  const openPreviewLightbox = (index: number) => {
+    if (!pack) return;
+    const items: LightboxItem[] = pack.previews.map((p) => ({
+      url: p.url,
+      type: "image" as const,
+      title: `Preview ${index + 1}`,
+    }));
+    if (items.length > 0) {
+      setLightboxItems(items);
+      setLightboxIndex(index);
+      setLightboxOpen(true);
+    }
+  };
+
+  const lightboxNext = () => {
+    setLightboxIndex((i) => (i + 1) % lightboxItems.length);
+  };
+
+  const lightboxPrev = () => {
+    setLightboxIndex((i) => (i - 1 + lightboxItems.length) % lightboxItems.length);
+  };
 
   if (loading) {
     return (
@@ -371,22 +458,30 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           {/* Existing previews */}
           {pack.previews.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {pack.previews.map((preview) => (
+              {pack.previews.map((preview, index) => (
                 <div
                   key={preview.id}
-                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
+                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
+                  onClick={() => openPreviewLightbox(index)}
                 >
                   <img
                     src={preview.url || PLACEHOLDER_IMAGE_SVG}
                     alt="Preview"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
+                  {/* Zoom overlay on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <ZoomIn className="h-6 w-6 text-white" />
+                  </div>
                   {canEdit && (
                     <button
                       type="button"
-                      onClick={() => handleDeletePreview(preview.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePreview(preview.id);
+                      }}
                       disabled={deleting === preview.id}
-                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
                       title="Excluir preview"
                     >
                       <X className="h-4 w-4" />
@@ -416,7 +511,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           )}
 
           {!canEdit && pack.previews.length < 3 && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-gray-400">
               Despublique o pack para adicionar mais previews.
             </p>
           )}
@@ -433,38 +528,77 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             </p>
           </div>
 
-          {/* Existing files */}
+          {/* Existing files - Grid with thumbnails */}
           {pack.files.length > 0 && (
-            <div className="max-h-64 space-y-2 overflow-y-auto">
-              {pack.files.map((file) => (
+            <div className="grid grid-cols-3 gap-2 max-h-80 overflow-y-auto">
+              {pack.files.map((file, index) => (
                 <div
                   key={file.id}
-                  className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3"
+                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
+                  onClick={() => file.previewUrl && openFileLightbox(index)}
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-muted">
-                    {isImage(file.mimeType) ? (
-                      <FileImage className="h-5 w-5 text-muted-foreground" />
+                  {/* Thumbnail */}
+                  {file.previewUrl ? (
+                    isVideo(file.mimeType) ? (
+                      <>
+                        <video
+                          src={file.previewUrl}
+                          className="h-full w-full object-cover"
+                          muted
+                          preload="metadata"
+                        />
+                        {/* Play icon overlay for videos */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="rounded-full bg-black/60 p-2">
+                            <Play className="h-6 w-6 text-white fill-white" />
+                          </div>
+                        </div>
+                      </>
                     ) : (
-                      <FileVideo className="h-5 w-5 text-muted-foreground" />
-                    )}
+                      <img
+                        src={file.previewUrl}
+                        alt={file.filename}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    )
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      {isImage(file.mimeType) ? (
+                        <FileImage className="h-8 w-8 text-muted-foreground" />
+                      ) : (
+                        <FileVideo className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Hover overlay with zoom icon */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <ZoomIn className="h-6 w-6 text-white" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
+
+                  {/* File info at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <p className="truncate text-xs text-white font-medium">
                       {file.filename}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </span>
+                    </p>
+                    <p className="text-xs text-white/70">
+                      {(file.size / 1024 / 1024).toFixed(1)} MB
+                    </p>
                   </div>
+
+                  {/* Delete button */}
                   {canEdit && (
                     <button
                       type="button"
-                      onClick={() => handleDeleteFile(file.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteFile(file.id);
+                      }}
                       disabled={deleting === file.id}
-                      className="rounded p-1 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
                       title="Excluir arquivo"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -497,7 +631,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           )}
 
           {!canEdit && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-gray-400">
               Despublique o pack para modificar arquivos.
             </p>
           )}
@@ -507,10 +641,10 @@ export default function EditPackPage({ params }: EditPackPageProps) {
       {/* Publishing Requirements */}
       {pack.status === "draft" && (
         <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <h4 className="font-medium text-amber-800">
+          <h4 className="font-medium text-gray-800">
             Requisitos para publicar:
           </h4>
-          <ul className="mt-2 space-y-1 text-sm text-amber-700">
+          <ul className="mt-2 space-y-1 text-sm text-gray-700">
             <li className={pack.previews.length >= 1 ? "line-through opacity-50" : ""}>
               - Ao menos 1 imagem de preview
             </li>
@@ -523,6 +657,126 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           </ul>
         </div>
       )}
+
+      {/* Danger Zone - Delete/Archive */}
+      <div className="mt-12 border-t pt-8 text-center">
+        <button
+          type="button"
+          onClick={handleDeletePack}
+          disabled={deletingPack}
+          className="text-sm text-red-800 hover:text-destructive transition-colors disabled:opacity-50"
+        >
+          {deletingPack
+            ? "Processando..."
+            : pack._count?.purchases
+              ? "Arquivar este pack"
+              : "Excluir este pack"}
+        </button>
+        <p className="mt-1 text-xs text-muted-foreground/70">
+          {pack._count?.purchases
+            ? "O pack será removido da sua lista, mas compradores manterão acesso."
+            : "Esta ação não pode ser desfeita."}
+        </p>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pack._count?.purchases ? "Arquivar pack?" : "Excluir pack?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pack._count?.purchases
+                ? `Este pack tem ${pack._count.purchases} venda(s). Ele será removido da sua lista, mas os compradores manterão acesso ao conteúdo.`
+                : "Esta ação não pode ser desfeita. O pack e todos os seus arquivos serão excluídos permanentemente."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeletePack}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {pack._count?.purchases ? "Arquivar" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Lightbox Dialog */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black/95 border-none overflow-hidden [&>button]:hidden">
+          {lightboxItems.length > 0 && (
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(false)}
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+              >
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
+              </button>
+
+              {/* Navigation - Previous */}
+              {lightboxItems.length > 1 && (
+                <button
+                  type="button"
+                  onClick={lightboxPrev}
+                  className="absolute left-2 sm:left-4 z-50 rounded-full bg-white/10 p-2 sm:p-3 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
+                </button>
+              )}
+
+              {/* Media content */}
+              <div className="flex items-center justify-center w-full h-full px-12 sm:px-16 py-16 sm:py-20 overflow-hidden">
+                {lightboxItems[lightboxIndex]?.type === "video" ? (
+                  <video
+                    key={lightboxItems[lightboxIndex].url}
+                    src={lightboxItems[lightboxIndex].url}
+                    controls
+                    autoPlay
+                    className="max-h-full max-w-full w-auto h-auto object-contain rounded-lg"
+                    style={{ maxHeight: 'calc(95vh - 120px)', maxWidth: 'calc(95vw - 100px)' }}
+                  />
+                ) : (
+                  <img
+                    key={lightboxItems[lightboxIndex].url}
+                    src={lightboxItems[lightboxIndex].url}
+                    alt={lightboxItems[lightboxIndex].title || "Media"}
+                    className="max-h-full max-w-full w-auto h-auto object-contain rounded-lg"
+                    style={{ maxHeight: 'calc(95vh - 120px)', maxWidth: 'calc(95vw - 100px)' }}
+                  />
+                )}
+              </div>
+
+              {/* Navigation - Next */}
+              {lightboxItems.length > 1 && (
+                <button
+                  type="button"
+                  onClick={lightboxNext}
+                  className="absolute right-2 sm:right-4 z-50 rounded-full bg-white/10 p-2 sm:p-3 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
+                </button>
+              )}
+
+              {/* Counter and title */}
+              <div className="absolute bottom-2 sm:bottom-4 left-0 right-0 text-center">
+                <p className="text-white/70 text-xs sm:text-sm">
+                  {lightboxIndex + 1} / {lightboxItems.length}
+                </p>
+                {lightboxItems[lightboxIndex]?.title && (
+                  <p className="text-white text-xs sm:text-sm mt-1 truncate px-8">
+                    {lightboxItems[lightboxIndex].title}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

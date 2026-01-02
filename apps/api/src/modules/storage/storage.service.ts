@@ -15,6 +15,7 @@ export class StorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
   private readonly logger = new Logger(StorageService.name);
+  private readonly isDevelopment: boolean;
   private mediaTokenService?: MediaTokenService;
 
   constructor(private config: ConfigService) {
@@ -22,6 +23,7 @@ export class StorageService {
     const accessKey = this.config.get<string>('R2_ACCESS_KEY');
     const secretKey = this.config.get<string>('R2_SECRET_KEY');
     this.bucket = this.config.get<string>('R2_BUCKET') || 'packdopezin';
+    this.isDevelopment = this.config.get<string>('NODE_ENV') !== 'production';
 
     if (!endpoint || !accessKey || !secretKey) {
       throw new Error('R2 credentials not configured');
@@ -36,7 +38,7 @@ export class StorageService {
       },
     });
 
-    this.logger.log('Storage service initialized with Cloudflare R2');
+    this.logger.log(`Storage service initialized with Cloudflare R2 (isDev: ${this.isDevelopment})`);
   }
 
   async getSignedDownloadUrl(
@@ -135,8 +137,9 @@ export class StorageService {
   }
 
   /**
-   * Generate a secure media URL via Cloudflare Worker
-   * Returns a tokenized URL that hides the actual R2 path
+   * Generate a secure media URL
+   * - In development: Returns presigned URL directly from R2
+   * - In production: Returns tokenized URL via Cloudflare Worker
    */
   generateMediaUrl(
     userId: string,
@@ -158,6 +161,21 @@ export class StorageService {
       filename,
       contentType
     );
+  }
+
+  /**
+   * Generate a direct presigned URL for a storage key
+   * Use this in development for immediate access without Worker
+   */
+  async generateDirectUrl(key: string, expiresIn = 3600): Promise<string> {
+    return this.getSignedDownloadUrl(key, expiresIn);
+  }
+
+  /**
+   * Check if running in development mode
+   */
+  isDevMode(): boolean {
+    return this.isDevelopment;
   }
 
   /**
