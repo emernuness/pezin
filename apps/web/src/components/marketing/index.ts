@@ -1,0 +1,16 @@
+export { Benefits } from "./Benefits";
+export { ContactForm } from "./ContactForm";
+export { Container } from "./Container";
+export { CTASection } from "./CTASection";
+export { FAQAccordion } from "./FAQAccordion";
+export { Features } from "./Features";
+export { Hero } from "./Hero";
+export { HowItWorks } from "./HowItWorks";
+export { MarketingFooter } from "./MarketingFooter";
+export { MarketingHeader } from "./MarketingHeader";
+export { SchemaOrg } from "./SchemaOrg";
+export { Section } from "./Section";
+export { SectionHeader } from "./SectionHeader";
+export { Security } from "./Security";
+export { SobreContent } from "./SobreContent";
+export { Testimonials } from "./Testimonials";

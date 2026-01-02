@@ -41,10 +41,10 @@ export function SiteHeader() {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">Entrar</Link>
+                  <Link href="/app/login">Entrar</Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link href="/signup">Criar conta</Link>
+                  <Link href="/app/signup">Criar conta</Link>
                 </Button>
               </>
             )}

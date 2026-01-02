@@ -26,7 +26,7 @@ export function PackCard({
   }).format(price / 100);
 
   return (
-    <Link href={purchased ? `/me/purchases/${id}` : `/pack/${id}`}>
+    <Link href={purchased ? `/app/me/purchases/${id}` : `/app/pack/${id}`}>
       <div className="group relative overflow-hidden rounded-lg bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-cardHover border border-border/50">
         <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
           <img

@@ -1,98 +1,76 @@
-import { EmptyState } from "@/components/EmptyState";
-import { FilterBar } from "@/components/FilterBar";
-import { PackCard } from "@/components/PackCard";
-import { Pagination } from "@/components/Pagination";
-import { Button } from "@/components/ui/button";
-import { api } from "@/services/api";
-import { Search } from "lucide-react";
-import Link from "next/link";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { SchemaOrg } from "@/components/marketing/SchemaOrg";
+import {
+  Benefits,
+  CTASection,
+  Features,
+  Hero,
+  HowItWorks,
+  Security,
+  Testimonials,
+} from "@/components/marketing";
+import type { Metadata } from "next";
 
-interface HomeProps {
-  searchParams: {
-    page?: string;
-    search?: string;
-    sort?: string;
-    minPrice?: string;
-    maxPrice?: string;
-  };
-}
+export const metadata: Metadata = {
+  title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
+  description:
+    "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs. Comece a vender em minutos.",
+  keywords:
+    "vender packs, monetizar conteudo, plataforma criadores, venda de fotos, venda de videos",
+  metadataBase: new URL("https://packdopezin.com.br"),
+  alternates: {
+    canonical: "https://packdopezin.com.br/",
+  },
+  openGraph: {
+    title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
+    description:
+      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+    url: "https://packdopezin.com.br/",
+    type: "website",
+    siteName: "Pack do Pezin",
+    locale: "pt_BR",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Pack do Pezin - Venda seus Packs de Conteudo",
+      },
+    ],
+  },
+  twitter: {
+    title: "Pack do Pezin — Venda seus Packs de Conteudo | Cadastro Gratuito",
+    description:
+      "Monetize seu conteudo com o Pack do Pezin. Cadastro gratuito, pagamentos seguros via Stripe, controle total sobre seus packs.",
+    card: "summary_large_image",
+    images: ["/twitter-image.jpg"],
+  },
+};
 
-interface Pack {
-  id: string;
-  title: string;
-  price: number;
-  previews: { url: string }[];
-  creator: {
-    displayName: string;
-    slug: string;
-  };
-}
-
-async function getPacks(params: Record<string, string | number | undefined>) {
-  try {
-    const { data } = await api.get("/public/packs", { params });
-    return data;
-  } catch (error) {
-    console.error("Failed to fetch packs", error);
-    return { data: [], meta: { total: 0, totalPages: 0, page: 1 } };
-  }
-}
-
-export default async function HomePage({ searchParams }: HomeProps) {
-  const packsData = await getPacks({
-    page: searchParams.page || 1,
-    limit: 12,
-    search: searchParams.search,
-    sort: searchParams.sort,
-    minPrice: searchParams.minPrice,
-    maxPrice: searchParams.maxPrice,
-  });
-
+export default function HomePage() {
   return (
-    <main className="container mx-auto min-h-screen px-4 py-8">
-      <section className="mb-12 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-          Descubra packs <span className="bg-primary px-2 text-primary-foreground transform -skew-x-3 inline-block rounded-sm">exclusivos</span>
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Apoie seus criadores favoritos e tenha acesso a conteúdos únicos.
-          Simples, rápido e seguro.
-        </p>
-      </section>
-
-      <FilterBar />
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {packsData.data.map((pack: Pack) => (
-          <PackCard
-            key={pack.id}
-            id={pack.id}
-            title={pack.title}
-            price={pack.price}
-            imageUrl={pack.previews?.[0]?.url}
-            creatorName={pack.creator.displayName}
-            creatorSlug={pack.creator.slug}
-          />
-        ))}
-      </div>
-
-      {packsData.data.length === 0 && (
-        <EmptyState
-          icon={Search}
-          title="Nenhum pack encontrado"
-          description="Tente ajustar seus filtros ou explorar outras categorias."
-          action={
-            <Button asChild variant="outline">
-              <Link href="/">Limpar filtros</Link>
-            </Button>
-          }
+    <div className="flex min-h-screen flex-col bg-[#0A0A0A]">
+      <SchemaOrg />
+      <MarketingHeader />
+      <main className="flex-1">
+        <Hero />
+        <HowItWorks />
+        <Benefits />
+        <Features />
+        <Security />
+        <Testimonials />
+        <CTASection
+          title="Pronto para comecar a vender?"
+          subtitle="Cadastro gratuito, sem cartao de credito, sem compromisso. Crie sua conta em menos de 2 minutos."
+          primaryCTA={{ text: "Criar Conta Gratis", href: "/app/signup" }}
+          secondaryCTA={{
+            text: "Ainda tem duvidas? Veja o FAQ",
+            href: "/perguntas-frequentes",
+          }}
         />
-      )}
-
-      <Pagination
-        currentPage={packsData.meta.page}
-        totalPages={packsData.meta.totalPages}
-      />
-    </main>
+      </main>
+      <MarketingFooter />
+    </div>
   );
 }
