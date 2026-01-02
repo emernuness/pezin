@@ -18,8 +18,8 @@ export function CreatorCard({
 }: CreatorCardProps) {
   return (
     <Link href={`/c/${slug}`}>
-      <div className="group overflow-hidden rounded-xl bg-white shadow-sm transition-all hover:shadow-md">
-        <div className="h-24 w-full bg-gray-100">
+      <div className="group overflow-hidden rounded-xl bg-card shadow-sm transition-all hover:shadow-cardHover border border-border/50">
+        <div className="h-24 w-full bg-muted">
           {coverImage && (
             <img
               src={coverImage}
@@ -30,7 +30,7 @@ export function CreatorCard({
         </div>
         <div className="relative px-4 pb-4">
           <div className="-mt-8 mb-3 flex justify-center">
-            <Avatar className="h-16 w-16 border-4 border-white">
+            <Avatar className="h-16 w-16 border-4 border-card bg-card">
               <AvatarImage src={profileImage || ""} alt={displayName} />
               <AvatarFallback>
                 {displayName.slice(0, 2).toUpperCase()}
@@ -38,10 +38,10 @@ export function CreatorCard({
             </Avatar>
           </div>
           <div className="text-center">
-            <h3 className="text-base font-semibold text-gray-900 group-hover:text-lime-700">
+            <h3 className="text-base font-semibold text-foreground group-hover:underline group-hover:decoration-primary">
               {displayName}
             </h3>
-            <p className="text-sm text-gray-500">@{slug}</p>
+            <p className="text-sm text-muted-foreground">@{slug}</p>
           </div>
         </div>
       </div>

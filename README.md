@@ -41,6 +41,21 @@ pnpm dev
 
 Para instruções detalhadas, consulte o [Guia de Desenvolvimento](./README-DEV.md).
 
+## Credenciais de Teste (Seeder)
+
+Após rodar o seeder (`pnpm db:seed`), as seguintes contas estarão disponíveis para teste:
+
+| Tipo | Email | Senha |
+|------|-------|-------|
+| Comprador | `buyer_demo@local.test` | `Demo123!` |
+| Criador | `creator_demo@local.test` | `Demo123!` |
+
+**Rotas de teste:**
+- Vitrine: `/`
+- Dashboard (criador): `/dashboard`
+- Minhas compras (comprador): `/me/purchases`
+- Perfil criador: `/c/sofia-bela-1`
+
 ## Features
 
 ### Para Criadores

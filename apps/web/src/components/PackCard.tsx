@@ -36,7 +36,7 @@ export function PackCard({
           />
         </div>
         <div className="p-4">
-          <h3 className="truncate text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="truncate text-lg font-semibold text-foreground group-hover:underline group-hover:decoration-primary transition-colors">
             {title}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export function PackCard({
                 <span className="text-lg font-bold text-foreground font-mono">
                   {formattedPrice}
                 </span>
-                <span className="text-sm text-primary font-medium group-hover:underline">
+                <span className="text-sm text-muted-foreground font-medium group-hover:text-foreground transition-colors group-hover:underline group-hover:decoration-primary">
                   Ver pack →
                 </span>
               </>

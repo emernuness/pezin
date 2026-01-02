@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
 import { Edit, Plus } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import React, { useEffect, useState } from "react";
 
 export default function PacksDashboardPage() {
   const [packs, setPacks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPacks() {
@@ -17,6 +19,8 @@ export default function PacksDashboardPage() {
         setPacks(data);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchPacks();
@@ -25,87 +29,122 @@ export default function PacksDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Meus Packs</h1>
-        <Link href="/dashboard/packs/new">
-          <Button>
+        <h1 className="text-3xl font-bold text-foreground">Meus Packs</h1>
+        <Button asChild>
+          <Link href="/dashboard/packs/new">
             <Plus className="mr-2 h-4 w-4" />
             Novo Pack
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="bg-muted/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Título
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Preço
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Vendas
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Ações
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {packs.map((pack) => (
-              <tr key={pack.id}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
-                      <img
-                        className="h-10 w-10 rounded-md object-cover"
-                        src={pack.previews?.[0]?.url || "/placeholder.png"}
-                        alt=""
-                      />
+          <tbody className="divide-y divide-border bg-card">
+            {loading ? (
+              // Skeleton loading rows
+              Array.from({ length: 3 }).map((_, i) => (
+                <tr key={`skeleton-${i}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <Skeleton className="h-10 w-10 rounded-md" />
+                      <Skeleton className="ml-4 h-4 w-32" />
                     </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {pack.title}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-4 w-16" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-4 w-8" />
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Skeleton className="h-8 w-8 ml-auto" />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              packs.map((pack) => (
+                <tr key={pack.id}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 flex-shrink-0">
+                        <img
+                          className="h-10 w-10 rounded-md object-cover"
+                          src={pack.previews?.[0]?.url || "/placeholder.png"}
+                          alt=""
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-foreground">
+                          {pack.title}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge
-                    variant={
-                      pack.status === "published" ? "default" : "secondary"
-                    }
-                  >
-                    {pack.status === "published" ? "Publicado" : "Rascunho"}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(pack.price / 100)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {pack._count?.purchases || 0}
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <Link href={`/dashboard/packs/${pack.id}/edit`}>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge
+                      variant={
+                        pack.status === "published" ? "default" : "secondary"
+                      }
+                    >
+                      {pack.status === "published" ? "Publicado" : "Rascunho"}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(pack.price / 100)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {pack._count?.purchases || 0}
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/dashboard/packs/${pack.id}/edit`}>
+                        <Edit className="h-4 w-4" />
+                        <span className="sr-only">Editar {pack.title}</span>
+                      </Link>
                     </Button>
-                  </Link>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-        {packs.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
-            Você ainda não criou nenhum pack.
+        {!loading && packs.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <p className="text-lg text-muted-foreground mb-4">
+              Você ainda não criou nenhum pack.
+            </p>
+            <Button asChild>
+              <Link href="/dashboard/packs/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Criar primeiro pack
+              </Link>
+            </Button>
           </div>
         )}
       </div>

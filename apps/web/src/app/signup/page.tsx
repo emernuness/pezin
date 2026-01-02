@@ -94,7 +94,7 @@ export default function SignupPage() {
                     className={cn(
                       "h-8 w-8 mb-2",
                       formData.userType === "consumer"
-                        ? "text-primary"
+                        ? "text-foreground"
                         : "text-muted-foreground",
                     )}
                   />
@@ -122,7 +122,7 @@ export default function SignupPage() {
                     className={cn(
                       "h-8 w-8 mb-2",
                       formData.userType === "creator"
-                        ? "text-primary"
+                        ? "text-foreground"
                         : "text-muted-foreground",
                     )}
                   />
@@ -215,7 +215,7 @@ export default function SignupPage() {
             Já tem uma conta?{" "}
             <Link
               href="/login"
-              className="text-primary hover:underline font-medium"
+              className="text-foreground hover:underline hover:decoration-primary font-medium"
             >
               Faça login
             </Link>

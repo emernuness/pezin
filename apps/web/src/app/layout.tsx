@@ -14,6 +14,14 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Pack do Pezin",
   description: "Plataforma de monetização para criadores de conteúdo",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/img/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/img/favicon.png",
+  },
 };
 
 export default function RootLayout({

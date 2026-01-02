@@ -7,6 +7,7 @@ import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function NewPackPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function NewPackPage() {
       // Redirect to edit page to continue (upload files, etc)
       router.push(`/dashboard/packs/${data.id}/edit`);
     } catch (error) {
-      alert("Erro ao criar pack. Verifique os dados.");
+      toast.error("Erro ao criar pack. Verifique os dados.");
     } finally {
       setLoading(false);
     }
@@ -42,11 +43,11 @@ export default function NewPackPage() {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">Novo Pack</h1>
+      <h1 className="mb-8 text-3xl font-bold text-foreground">Novo Pack</h1>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-xl bg-white p-6 shadow-sm"
+        className="space-y-6 rounded-xl bg-card border border-border p-6 shadow-sm"
       >
         <div className="space-y-2">
           <Label htmlFor="title">Título do Pack</Label>
@@ -72,7 +73,7 @@ export default function NewPackPage() {
             placeholder="29,90"
             required
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Mínimo R$ 9,90. O criador recebe 80% do valor.
           </p>
         </div>

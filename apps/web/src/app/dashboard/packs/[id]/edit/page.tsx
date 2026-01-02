@@ -9,6 +9,7 @@ import { Trash, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface EditPackPageProps {
   params: {
@@ -29,7 +30,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
         setPack(data);
       } catch (error) {
         console.error(error);
-        alert("Erro ao carregar pack");
+        toast.error("Erro ao carregar pack");
         router.push("/dashboard/packs");
       } finally {
         setLoading(false);
@@ -41,11 +42,12 @@ export default function EditPackPage({ params }: EditPackPageProps) {
   const handlePublish = async () => {
     try {
       await api.post(`/packs/${params.id}/publish`);
-      alert("Pack publicado com sucesso!");
+      toast.success("Pack publicado com sucesso!");
       router.push("/dashboard/packs");
-    } catch (error: any) {
-      alert(
-        error.response?.data?.message ||
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        axiosError.response?.data?.message ||
           "Erro ao publicar pack. Verifique se possui 3 arquivos e 1 preview.",
       );
     }
@@ -95,7 +97,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
       setPack(data);
     } catch (error) {
       console.error(error);
-      alert("Erro no upload");
+      toast.error("Erro no upload. Tente novamente.");
     } finally {
       setUploading(false);
       // Reset input
@@ -109,14 +111,14 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Editar Pack</h1>
-          <p className="text-gray-500">{pack.title}</p>
+          <h1 className="text-3xl font-bold text-foreground">Editar Pack</h1>
+          <p className="text-muted-foreground">{pack.title}</p>
         </div>
         <div className="flex gap-4">
           {pack.status === "draft" ? (
             <Button
               onClick={handlePublish}
-              className="bg-lime-500 hover:bg-lime-600"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Publicar Pack
             </Button>
@@ -128,9 +130,9 @@ export default function EditPackPage({ params }: EditPackPageProps) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Previews Section */}
-        <div className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-900">Previews (Capa)</h3>
-          <p className="text-xs text-gray-500">
+        <div className="space-y-4 rounded-xl bg-card border border-border p-6 shadow-sm">
+          <h3 className="font-semibold text-foreground">Previews (Capa)</h3>
+          <p className="text-xs text-muted-foreground">
             Imagens públicas. Sem nudez explícita. Máx 3.
           </p>
 
@@ -138,7 +140,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             {pack.previews.map((preview: any) => (
               <div
                 key={preview.id}
-                className="relative aspect-square overflow-hidden rounded-lg bg-gray-100"
+                className="relative aspect-square overflow-hidden rounded-lg bg-muted"
               >
                 <img
                   src={preview.url}
@@ -149,9 +151,9 @@ export default function EditPackPage({ params }: EditPackPageProps) {
               </div>
             ))}
             {pack.previews.length < 3 && (
-              <Label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 hover:bg-gray-50">
-                <Upload className="h-6 w-6 text-gray-400" />
-                <span className="mt-2 text-xs text-gray-500">
+              <Label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border hover:bg-muted">
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <span className="mt-2 text-xs text-muted-foreground">
                   {uploading ? "..." : "Add"}
                 </span>
                 <Input
@@ -167,9 +169,9 @@ export default function EditPackPage({ params }: EditPackPageProps) {
         </div>
 
         {/* Files Section */}
-        <div className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-900">Arquivos do Pack</h3>
-          <p className="text-xs text-gray-500">
+        <div className="space-y-4 rounded-xl bg-card border border-border p-6 shadow-sm">
+          <h3 className="font-semibold text-foreground">Arquivos do Pack</h3>
+          <p className="text-xs text-muted-foreground">
             Conteúdo exclusivo (Fotos/Vídeos). Mín 3 arquivos.
           </p>
 
@@ -177,22 +179,22 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             {pack.files.map((file: any) => (
               <div
                 key={file.id}
-                className="flex items-center justify-between rounded-lg border bg-gray-50 p-3"
+                className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-3"
               >
-                <span className="truncate text-sm font-medium text-gray-700">
+                <span className="truncate text-sm font-medium text-foreground">
                   {file.filename}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </span>
               </div>
             ))}
           </div>
 
-          <Label className="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-6 hover:bg-gray-50">
+          <Label className="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border py-6 hover:bg-muted">
             <div className="flex flex-col items-center">
-              <Upload className="h-8 w-8 text-gray-400" />
-              <span className="mt-2 text-sm text-gray-600">
+              <Upload className="h-8 w-8 text-muted-foreground" />
+              <span className="mt-2 text-sm text-muted-foreground">
                 {uploading ? "Enviando..." : "Adicionar Arquivos"}
               </span>
             </div>

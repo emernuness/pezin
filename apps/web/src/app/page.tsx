@@ -52,7 +52,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
     <main className="container mx-auto min-h-screen px-4 py-8">
       <section className="mb-12 text-center">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-          Descubra packs <span className="text-primary">exclusivos</span>
+          Descubra packs <span className="bg-primary px-2 text-primary-foreground transform -skew-x-3 inline-block rounded-sm">exclusivos</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
           Apoie seus criadores favoritos e tenha acesso a conteúdos únicos.

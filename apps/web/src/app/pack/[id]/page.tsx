@@ -53,7 +53,7 @@ export default async function PackPage({ params }: PackDetailProps) {
           <h1 className="text-2xl font-bold text-foreground">
             Pack não encontrado
           </h1>
-          <Link href="/" className="mt-4 text-primary hover:underline">
+          <Link href="/" className="mt-4 text-foreground underline decoration-primary hover:text-primary transition-colors">
             Voltar para a vitrine
           </Link>
         </div>
@@ -127,11 +127,11 @@ export default async function PackPage({ params }: PackDetailProps) {
               </p>
               <div className="mt-4 flex items-center space-x-4 text-sm text-muted-foreground">
                 <span className="flex items-center">
-                  <Check className="mr-1 h-4 w-4 text-primary" />
+                  <Check className="mr-1 h-4 w-4 text-foreground" />
                   {pack._count?.files || 0} arquivos
                 </span>
                 <span className="flex items-center">
-                  <ShieldCheck className="mr-1 h-4 w-4 text-primary" />
+                  <ShieldCheck className="mr-1 h-4 w-4 text-foreground" />
                   Acesso vitalício
                 </span>
               </div>

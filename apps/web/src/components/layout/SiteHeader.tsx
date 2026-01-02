@@ -4,6 +4,7 @@ import { UserNav } from "@/components/layout/UserNav";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth.store";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -21,7 +22,14 @@ export function SiteHeader() {
       <div className="container mx-auto flex h-14 items-center px-4">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold sm:inline-block">Pack do Pezin</span>
+            <Image
+              src="/img/logo.svg"
+              alt="Pack do Pezin"
+              width={140}
+              height={32}
+              priority
+              className="h-12 w-auto"
+            />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
@@ -32,14 +40,12 @@ export function SiteHeader() {
               <UserNav />
             ) : (
               <>
-                <Link href="/login">
-                  <Button variant="ghost" size="sm">
-                    Entrar
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button size="sm">Criar conta</Button>
-                </Link>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/login">Entrar</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/signup">Criar conta</Link>
+                </Button>
               </>
             )}
           </nav>

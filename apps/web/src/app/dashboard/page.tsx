@@ -47,22 +47,20 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="w-64 border-r border-border bg-card p-6 hidden md:block">
         <nav className="space-y-2">
-          <Link href="/dashboard">
-            <Button
-              variant="ghost"
-              className="w-full justify-start font-medium text-foreground"
-            >
-              Visão Geral
-            </Button>
-          </Link>
-          <Link href="/dashboard/packs">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
-            >
-              Meus Packs
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            className="w-full justify-start font-medium text-foreground"
+            asChild
+          >
+            <Link href="/dashboard">Visão Geral</Link>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            asChild
+          >
+            <Link href="/dashboard/packs">Meus Packs</Link>
+          </Button>
         </nav>
       </aside>
       <div className="flex-1 p-8 space-y-8">{children}</div>
@@ -249,9 +247,15 @@ export default function DashboardPage() {
               size="sm"
               className="mt-4 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               disabled={stats.availableBalance < 5000}
+              title={stats.availableBalance < 5000 ? "Saldo mínimo de R$ 50,00 necessário" : undefined}
             >
               Solicitar Saque
             </Button>
+            {stats.availableBalance < 5000 && (
+              <p className="mt-2 text-xs text-muted-foreground/80 text-center">
+                Mínimo de R$ 50,00 para saque
+              </p>
+            )}
           </CardContent>
         </Card>
 

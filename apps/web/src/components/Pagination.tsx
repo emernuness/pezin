@@ -2,22 +2,26 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
+  /** Base path for pagination. Defaults to current pathname */
+  basePath?: string;
 }
 
-export function Pagination({ currentPage, totalPages }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, basePath }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
-    router.push(`/?${params.toString()}`);
+    const targetPath = basePath || pathname;
+    router.push(`${targetPath}?${params.toString()}`);
   };
 
   if (totalPages <= 1) return null;
