@@ -88,8 +88,8 @@
 ## O Que Falta Construir
 
 ### Alta Prioridade
-- [ ] **Testar fluxo completo** de upload com conversão no ambiente real
-- [ ] **FFmpeg em Docker** - Adicionar ao Dockerfile se necessário
+- [x] **Testar fluxo completo** de upload com conversão ✅ (testado 2025-01-02)
+- [x] **FFmpeg em Docker** - Adicionado ao Dockerfile ✅
 - [ ] **Onboarding Stripe** - Fluxo completo no frontend
 - [ ] **Verificação de Email** - Envio e confirmação
 
@@ -113,7 +113,7 @@
 
 ## Problemas Conhecidos
 
-- **FFmpeg em Produção**: Verificar se o Docker tem FFmpeg instalado
+- ~~**FFmpeg em Produção**: Verificar se o Docker tem FFmpeg instalado~~ ✅ Resolvido
 - Nenhum bug crítico identificado
 
 ## Histórico de Releases
@@ -185,9 +185,9 @@ packages/shared/          schemas + types
 
 ## Próximo Milestone
 
-**v0.4.0 - Produção Ready**
-- [ ] Testar conversão de mídia em produção
-- [ ] FFmpeg no Docker
+**v0.5.0 - Produção Ready**
+- [x] ~~Testar conversão de mídia em produção~~ ✅
+- [x] ~~FFmpeg no Docker~~ ✅
 - [ ] Onboarding Stripe integrado
 - [ ] Verificação de email
 - [ ] Testes E2E críticos

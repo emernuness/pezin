@@ -109,8 +109,8 @@ components/
 
 ## Próximos Passos
 
-1. **Testar fluxo completo** de upload com conversão
-2. **Verificar FFmpeg** no ambiente de produção (Coolify/Docker)
+1. ~~**Testar fluxo completo** de upload com conversão~~ ✅ Testado com sucesso
+2. ~~**Verificar FFmpeg** no ambiente de produção~~ ✅ Adicionado ao Dockerfile
 3. **Onboarding Stripe Connect** - Fluxo no frontend
 4. **Verificação de Email** - Envio e confirmação
 
@@ -144,5 +144,5 @@ components/
 
 ## Bloqueios Conhecidos
 
-- **FFmpeg em Produção**: Verificar se o Docker image tem FFmpeg instalado
+- ~~**FFmpeg em Produção**: Verificar se o Docker image tem FFmpeg instalado~~ ✅ Resolvido
 - Nenhum bug crítico no momento
