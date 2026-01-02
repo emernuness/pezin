@@ -1,6 +1,6 @@
 "use client";
 
-import { PackCard } from "@/components/PackCard";
+import { PackCard } from "@/components/cards";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import Link from "next/link";

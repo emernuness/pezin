@@ -1,6 +1,6 @@
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/common";
+import { PackCard } from "@/components/cards";
 import { FilterBar } from "@/components/FilterBar";
-import { PackCard } from "@/components/PackCard";
 import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
