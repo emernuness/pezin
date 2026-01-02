@@ -1,6 +1,9 @@
 # Development Dockerfile for NestJS API
 FROM node:20-alpine AS base
 
+# Install system dependencies (FFmpeg for video conversion)
+RUN apk add --no-cache ffmpeg
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@8.15.1 --activate
 
