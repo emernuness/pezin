@@ -51,18 +51,35 @@ export class PacksService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return packs.map((pack) => ({
-      id: pack.id,
-      title: pack.title,
-      description: pack.description,
-      price: pack.price,
-      status: pack.status,
-      createdAt: pack.createdAt,
-      updatedAt: pack.updatedAt,
-      publishedAt: pack.publishedAt,
-      previews: pack.previews.map((p) => ({ url: p.url })),
-      _count: pack._count,
-    }));
+    // Generate signed URLs for previews
+    const packsWithUrls = await Promise.all(
+      packs.map(async (pack) => {
+        const previewsWithUrls = await Promise.all(
+          pack.previews.map(async (p) => {
+            if (p.url.startsWith('http') || p.url.startsWith('data:')) {
+              return { url: p.url };
+            }
+            const signedUrl = await this.storage.getSignedDownloadUrl(p.url, 3600);
+            return { url: signedUrl };
+          })
+        );
+
+        return {
+          id: pack.id,
+          title: pack.title,
+          description: pack.description,
+          price: pack.price,
+          status: pack.status,
+          createdAt: pack.createdAt,
+          updatedAt: pack.updatedAt,
+          publishedAt: pack.publishedAt,
+          previews: previewsWithUrls,
+          _count: pack._count,
+        };
+      })
+    );
+
+    return packsWithUrls;
   }
 
   /**
@@ -97,7 +114,23 @@ export class PacksService {
       throw new NotFoundException('Pack não encontrado');
     }
 
-    return pack;
+    // Generate signed URLs for previews
+    const previewsWithUrls = await Promise.all(
+      pack.previews.map(async (preview) => {
+        // If it's already a full URL or data URL, return as is
+        if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
+          return preview;
+        }
+        // Generate signed URL for storage key
+        const signedUrl = await this.storage.getSignedDownloadUrl(preview.url, 3600);
+        return { ...preview, url: signedUrl };
+      })
+    );
+
+    return {
+      ...pack,
+      previews: previewsWithUrls,
+    };
   }
 
   /**

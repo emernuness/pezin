@@ -5,3 +5,4 @@
 
 export * from "./FormField";
 export * from "./PasswordInput";
+export * from "./MediaUploader";

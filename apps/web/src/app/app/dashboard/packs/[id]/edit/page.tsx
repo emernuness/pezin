@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaUploader } from "@/components/forms";
 import { api } from "@/services/api";
 import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
-import { ArrowLeft, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Trash2, X, FileVideo, FileImage } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 interface EditPackPageProps {
@@ -50,13 +51,18 @@ export default function EditPackPage({ params }: EditPackPageProps) {
   const [pack, setPack] = useState<Pack | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+
+  // Refresh pack data
+  const refreshPack = useCallback(async () => {
+    const { data } = await api.get(`/packs/${params.id}`);
+    setPack(data);
+  }, [params.id]);
 
   useEffect(() => {
     async function fetchPack() {
@@ -125,64 +131,59 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     try {
       await api.post(`/packs/${params.id}/unpublish`);
       toast.success("Pack despublicado");
-      const { data } = await api.get(`/packs/${params.id}`);
-      setPack(data);
+      await refreshPack();
     } catch {
       toast.error("Erro ao despublicar pack");
     }
   };
 
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "preview" | "file"
-  ) => {
-    if (!e.target.files?.length) return;
-    setUploading(true);
-
-    try {
-      const file = e.target.files[0];
-
-      // Get upload URL
-      const { data: uploadData } = await api.post(
-        `/packs/${params.id}/upload-url`,
-        {
-          filename: file.name,
-          contentType: file.type,
-          type,
-        }
-      );
-
-      // Upload to R2
-      await fetch(uploadData.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      // Confirm upload
-      await api.post(`/packs/${params.id}/files`, {
-        fileId: uploadData.fileId,
-        key: uploadData.key,
+  // Upload handlers for MediaUploader
+  const handlePreviewUpload = useCallback(
+    async (file: File) => {
+      const { data } = await api.post(`/packs/${params.id}/upload-url`, {
         filename: file.name,
-        mimeType: file.type,
-        size: file.size,
+        contentType: file.type,
+        type: "preview",
+      });
+      return data;
+    },
+    [params.id]
+  );
+
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      const { data } = await api.post(`/packs/${params.id}/upload-url`, {
+        filename: file.name,
+        contentType: file.type,
+        type: "file",
+      });
+      return data;
+    },
+    [params.id]
+  );
+
+  const handleUploadConfirm = useCallback(
+    async (
+      data: { fileId: string; key: string; filename: string; mimeType: string; size: number },
+      type: "preview" | "file"
+    ) => {
+      await api.post(`/packs/${params.id}/files`, {
+        ...data,
         type,
       });
+    },
+    [params.id]
+  );
 
-      toast.success(type === "preview" ? "Preview adicionado!" : "Arquivo adicionado!");
+  const handlePreviewComplete = useCallback(() => {
+    refreshPack();
+    toast.success("Previews enviados com sucesso!");
+  }, [refreshPack]);
 
-      // Refresh pack data
-      const { data } = await api.get(`/packs/${params.id}`);
-      setPack(data);
-    } catch {
-      toast.error("Erro no upload. Tente novamente.");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  };
+  const handleFilesComplete = useCallback(() => {
+    refreshPack();
+    toast.success("Arquivos enviados com sucesso!");
+  }, [refreshPack]);
 
   const handleDeleteFile = async (fileId: string) => {
     if (!confirm("Tem certeza que deseja excluir este arquivo?")) return;
@@ -191,8 +192,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     try {
       await api.delete(`/packs/${params.id}/files/${fileId}`);
       toast.success("Arquivo excluido");
-      const { data } = await api.get(`/packs/${params.id}`);
-      setPack(data);
+      await refreshPack();
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       toast.error(axiosError.response?.data?.message || "Erro ao excluir arquivo");
@@ -208,8 +208,7 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     try {
       await api.delete(`/packs/${params.id}/previews/${previewId}`);
       toast.success("Preview excluido");
-      const { data } = await api.get(`/packs/${params.id}`);
-      setPack(data);
+      await refreshPack();
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       toast.error(axiosError.response?.data?.message || "Erro ao excluir preview");
@@ -217,6 +216,9 @@ export default function EditPackPage({ params }: EditPackPageProps) {
       setDeleting(null);
     }
   };
+
+  const isImage = (mimeType: string) => mimeType.startsWith("image/");
+  const isVideo = (mimeType: string) => mimeType.startsWith("video/");
 
   if (loading) {
     return (
@@ -366,46 +368,52 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {pack.previews.map((preview) => (
-              <div
-                key={preview.id}
-                className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
-              >
-                <img
-                  src={preview.url || PLACEHOLDER_IMAGE_SVG}
-                  alt="Preview"
-                  className="h-full w-full object-cover"
-                />
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePreview(preview.id)}
-                    disabled={deleting === preview.id}
-                    className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                    title="Excluir preview"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-            {pack.previews.length < 3 && canEdit && (
-              <Label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border hover:bg-muted">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="mt-2 text-xs text-muted-foreground">
-                  {uploading ? "..." : "Adicionar"}
-                </span>
-                <Input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => handleFileUpload(e, "preview")}
-                  disabled={uploading}
-                />
-              </Label>
-            )}
-          </div>
+          {/* Existing previews */}
+          {pack.previews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {pack.previews.map((preview) => (
+                <div
+                  key={preview.id}
+                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
+                >
+                  <img
+                    src={preview.url || PLACEHOLDER_IMAGE_SVG}
+                    alt="Preview"
+                    className="h-full w-full object-cover"
+                  />
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePreview(preview.id)}
+                      disabled={deleting === preview.id}
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                      title="Excluir preview"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload new previews */}
+          {pack.previews.length < 3 && canEdit && (
+            <MediaUploader
+              onUpload={handlePreviewUpload}
+              onConfirm={(data) => handleUploadConfirm(data, "preview")}
+              onComplete={handlePreviewComplete}
+              accept="image/jpeg,image/png,image/webp"
+              multiple={true}
+              maxFiles={3 - pack.previews.length}
+              maxFileSize={5 * 1024 * 1024}
+              convertToWebP={true}
+              showPreviews={true}
+              previewMode="grid"
+              label="Adicionar previews"
+              hint={`Máximo ${3 - pack.previews.length} imagem(ns). Convertidas para WebP.`}
+            />
+          )}
 
           {!canEdit && pack.previews.length < 3 && (
             <p className="text-xs text-amber-600">
@@ -425,57 +433,67 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             </p>
           </div>
 
-          <div className="max-h-64 space-y-2 overflow-y-auto">
-            {pack.files.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between rounded-lg border bg-muted/50 p-3"
-              >
-                <div className="flex-1 min-w-0">
-                  <span className="block truncate text-sm font-medium text-foreground">
-                    {file.filename}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
+          {/* Existing files */}
+          {pack.files.length > 0 && (
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {pack.files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3"
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-muted">
+                    {isImage(file.mimeType) ? (
+                      <FileImage className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <FileVideo className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate text-sm font-medium text-foreground">
+                      {file.filename}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </div>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(file.id)}
+                      disabled={deleting === file.id}
+                      className="rounded p-1 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
+                      title="Excluir arquivo"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteFile(file.id)}
-                    disabled={deleting === file.id}
-                    className="ml-2 rounded p-1 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
-                    title="Excluir arquivo"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
 
-            {pack.files.length === 0 && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                Nenhum arquivo adicionado ainda.
-              </p>
-            )}
-          </div>
+          {pack.files.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Nenhum arquivo adicionado ainda.
+            </p>
+          )}
 
+          {/* Upload new files */}
           {canEdit && (
-            <Label className="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border py-6 hover:bg-muted">
-              <div className="flex flex-col items-center">
-                <Upload className="h-8 w-8 text-muted-foreground" />
-                <span className="mt-2 text-sm text-muted-foreground">
-                  {uploading ? "Enviando..." : "Adicionar Arquivos"}
-                </span>
-              </div>
-              <Input
-                type="file"
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, "file")}
-                disabled={uploading}
-              />
-            </Label>
+            <MediaUploader
+              onUpload={handleFileUpload}
+              onConfirm={(data) => handleUploadConfirm(data, "file")}
+              onComplete={handleFilesComplete}
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+              multiple={true}
+              maxFiles={50 - pack.files.length}
+              maxFileSize={100 * 1024 * 1024}
+              convertToWebP={true}
+              showPreviews={true}
+              previewMode="list"
+              label="Adicionar arquivos"
+              hint="Fotos e vídeos. Imagens convertidas para WebP."
+            />
           )}
 
           {!canEdit && (
