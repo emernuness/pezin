@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
 import { PacksModule } from './modules/packs/packs.module';
 import { PublicModule } from './modules/public/public.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -65,6 +66,7 @@ import { HealthController } from './modules/health/health.controller';
     AuthModule,
     StripeModule,    // Legacy - será removido na Sprint 8
     PaymentModule,   // Gateway Agnostic - novo sistema
+    WebhookModule,   // Webhooks de todos os gateways
     PacksModule,
     PublicModule,
     DashboardModule,
