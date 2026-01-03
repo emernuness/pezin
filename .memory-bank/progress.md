@@ -1,6 +1,6 @@
 # Progress - Pack do Pezin
 
-> Última atualização: 2025-01-03
+> Última atualização: 2026-01-03
 
 ## O Que Funciona
 
@@ -10,7 +10,7 @@
 - [x] Docker Compose para desenvolvimento
 - [x] Schema Prisma completo
 - [x] Sistema de Seed completo e idempotente
-- [x] **Módulo Financeiro Gateway Agnostic** - Sprint 1 concluída
+- [x] **Módulo Financeiro Gateway Agnostic** - COMPLETO ✅
 
 ### Backend (API)
 
@@ -28,7 +28,9 @@
 - [x] **Health** - Status da API e database
 - [x] **Packs** - Upload URLs, confirmação, download URLs, conversão de mídia
 - [x] **Storage** - Integração Cloudflare R2, download/upload direto
-- [x] **Stripe** - Checkout, Connect onboarding, webhooks
+- [x] **Payment** - Checkout PIX, consulta de status (Gateway Agnostic)
+- [x] **Webhook** - Processamento de webhooks de todos os gateways
+- [x] **Wallet** - Saldo, histórico, saques via PIX
 - [x] **Purchases** - Listagem e verificação de compras
 - [x] **Dashboard** - Stats, balance, sales, chart
 - [x] **Public** - Listagem de packs e creators
@@ -38,24 +40,27 @@
 - [x] Rate limiting (100 req/min global, 10 req/min auth)
 - [x] Download rate limiting (10/dia por arquivo)
 - [x] Validação Zod via pipe customizado
-- [x] Webhook signature verification
-- [x] Idempotência de webhooks (StripeEvent)
+- [x] Webhook signature verification (HMAC)
+- [x] Idempotência de webhooks (WebhookEvent)
 - [x] **Cloudflare Worker CDN** - URLs tokenizadas, R2 escondido do frontend
 - [x] **MediaToken Module** - JWT para acesso a mídia
 - [x] **InternalApiGuard** - Protege endpoints internos
+- [x] **Row Locking** - SELECT FOR UPDATE para saques
 
-#### Módulo Financeiro Gateway Agnostic (Novo!)
+#### Módulo Financeiro Gateway Agnostic ✅
 - [x] **Modelos Prisma**: Wallet, LedgerEntry, Payment, Payout, WebhookEvent
 - [x] **Campos User**: pixKey, pixKeyType
 - [x] **Interface IPaymentGateway**: Contrato para todos os gateways
-- [x] **Adapters**: SuitPay, EzzePay, Voluti
+- [x] **Adapters**: SuitPay, EzzePay, Voluti (todos implementados)
 - [x] **GatewayFactory**: Seleção de gateway via ENV_CURRENT_GATEWAY
-- [ ] PaymentService e PaymentController (Sprint 3)
-- [ ] WebhookModule (Sprint 4)
-- [ ] WalletModule e LedgerService (Sprint 5)
-- [ ] Payout via PIX (Sprint 6)
-- [ ] Migração de saldos Stripe (Sprint 7)
-- [ ] Remoção completa do Stripe (Sprint 8)
+- [x] **PaymentService**: Checkout PIX, consulta de status
+- [x] **PaymentController**: Endpoints de checkout e compras
+- [x] **WebhookModule**: Processamento idempotente de webhooks
+- [x] **LedgerService**: Double-entry bookkeeping
+- [x] **WalletModule**: Saldo, histórico, CRON de liberação
+- [x] **PayoutService**: Saques via PIX com row locking
+- [x] **Script de Migração**: Stripe → Wallet
+- [x] **Remoção do Stripe**: Módulo, dependências e campos removidos
 
 ### Frontend (Web)
 
@@ -102,35 +107,45 @@
 ## O Que Falta Construir
 
 ### Alta Prioridade
-- [x] **Testar fluxo completo** de upload com conversão ✅ (testado 2025-01-02)
-- [x] **FFmpeg em Docker** - Adicionado ao Dockerfile ✅
-- [ ] **Onboarding Stripe** - Fluxo completo no frontend
-- [ ] **Verificação de Email** - Envio e confirmação
+- [ ] **Integração Frontend PIX** - Tela de checkout PIX
+- [ ] **Tela de Saques** - Interface para solicitar saques via PIX
+- [ ] **Configuração de Chave PIX** - Formulário no perfil
 
 ### Média Prioridade
-- [ ] **Sistema de Saques** - Interface para solicitar saques
+- [ ] **Verificação de Email** - Envio e confirmação
 - [ ] **Página de Configurações** - Preferências do usuário
 
 ### Baixa Prioridade
-- [ ] **Testes E2E** - Fluxo completo de compra
+- [ ] **Testes E2E** - Fluxo completo de compra PIX
 - [ ] **Recuperação de Senha** - Esqueci minha senha
 - [ ] **Notificações** - Emails transacionais
 
 ## Status Atual
 
 ```
-█████████████████████████  95% Backend
+█████████████████████████  100% Backend (Gateway Agnostic)
 ████████████████████████░  90% Frontend
-█████████████████████████  95% Infraestrutura
-████████████████████████░  90% Overall
+█████████████████████████  100% Infraestrutura
+█████████████████████████  95% Overall
 ```
 
 ## Problemas Conhecidos
 
-- ~~**FFmpeg em Produção**: Verificar se o Docker tem FFmpeg instalado~~ ✅ Resolvido
 - Nenhum bug crítico identificado
+- Erros de lint pré-existentes em csrf.guard.ts (não críticos)
 
 ## Histórico de Releases
+
+### v0.6.0 (2026-01-03)
+- **Módulo Financeiro Gateway Agnostic - COMPLETO**
+  - Sprint 1: Modelos Prisma e Interface IPaymentGateway ✅
+  - Sprint 2: Adapters SuitPay, EzzePay, Voluti ✅
+  - Sprint 3: PaymentService e PaymentController ✅
+  - Sprint 4: WebhookModule com idempotência ✅
+  - Sprint 5: WalletModule com CRON de liberação ✅
+  - Sprint 6: PayoutService com row locking ✅
+  - Sprint 7: Script de migração Stripe → Wallet ✅
+  - Sprint 8: Remoção completa do Stripe ✅
 
 ### v0.5.0 (2025-01-03)
 - **Módulo Financeiro Gateway Agnostic - Sprint 1**
@@ -201,27 +216,77 @@
 ## Métricas de Código
 
 ```
-apps/api/src/modules/     9 módulos (+media)
+apps/api/src/modules/     12 módulos (incluindo payment, wallet, webhook)
 apps/web/src/app/         10+ rotas
 apps/web/src/components/  5 categorias organizadas
 apps/web/src/utils/       formatters + constants
 apps/web/src/hooks/       useMediaUpload + outros
-packages/shared/          schemas + types
+packages/shared/          schemas + types (auth, pack, payment)
 ```
 
 ## Próximo Milestone
 
-**v0.6.0 - Módulo Financeiro Completo**
-- [x] Sprint 1: Modelos Prisma e Interface IPaymentGateway ✅
-- [x] Sprint 2: Adapters SuitPay, EzzePay, Voluti ✅
-- [ ] Sprint 3: PaymentService e PaymentController
-- [ ] Sprint 4: WebhookModule
-- [ ] Sprint 5: WalletModule e LedgerService
-- [ ] Sprint 6: Payout via PIX
-- [ ] Sprint 7: Migração de saldos Stripe
-- [ ] Sprint 8: Remoção completa do Stripe
+**v0.7.0 - Frontend PIX Ready**
+- [ ] Tela de checkout PIX
+- [ ] Tela de saques via PIX
+- [ ] Formulário de configuração de chave PIX
 
-**v0.7.0 - Produção Ready**
+**v0.8.0 - Produção Ready**
 - [ ] Verificação de email
 - [ ] Testes E2E críticos
 - [ ] Deploy em produção
+
+## Endpoints do Sistema Financeiro
+
+### Payment Module
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/payment/checkout` | Cria checkout PIX |
+| GET | `/payment/:id/status` | Status do pagamento |
+| GET | `/payment/my-purchases` | Lista compras do usuário |
+| GET | `/payment/my-sales` | Lista vendas do criador |
+
+### Wallet Module
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/wallet/balance` | Saldo atual (disponível/congelado) |
+| GET | `/wallet/summary` | Resumo completo |
+| GET | `/wallet/transactions` | Histórico de transações |
+| POST | `/wallet/payout` | Solicitar saque via PIX |
+| GET | `/wallet/payouts` | Lista saques |
+| GET | `/wallet/payouts/:id` | Detalhes do saque |
+
+### Webhook Endpoints
+| Método | Endpoint | Gateway |
+|--------|----------|---------|
+| POST | `/webhooks/suitpay` | SuitPay |
+| POST | `/webhooks/ezzepay` | EzzePay |
+| POST | `/webhooks/voluti` | Voluti |
+
+## Variáveis de Ambiente Novas
+
+```env
+# Gateway Configuration
+ENV_CURRENT_GATEWAY=suitpay  # suitpay | ezzepay | voluti
+
+# SuitPay
+SUITPAY_API_KEY=xxx
+SUITPAY_API_URL=https://api.suitpay.app
+SUITPAY_WEBHOOK_SECRET=xxx
+
+# EzzePay
+EZZEPAY_API_KEY=xxx
+EZZEPAY_API_URL=https://api.ezzepay.com.br
+EZZEPAY_WEBHOOK_SECRET=xxx
+
+# Voluti
+VOLUTI_API_KEY=xxx
+VOLUTI_API_URL=https://api.voluti.com.br
+VOLUTI_WEBHOOK_SECRET=xxx
+VOLUTI_CLIENT_ID=xxx
+
+# Financial Settings
+PLATFORM_FEE_PERCENT=20
+ANTI_FRAUD_HOLD_DAYS=14
+MIN_PAYOUT_AMOUNT=5000
+```
