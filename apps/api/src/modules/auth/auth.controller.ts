@@ -27,10 +27,25 @@ import {
 } from '@pack-do-pezin/shared';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { CsrfGuard } from '@/common/guards/csrf.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('csrf-token')
+  getCsrfToken(@Res({ passthrough: true }) response: Response) {
+    // Generate CSRF token and set in cookie
+    const token = CsrfGuard.generateToken();
+    response.cookie('XSRF-TOKEN', token, {
+      httpOnly: false, // Must be readable by JavaScript
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/',
+    });
+    return { csrfToken: token };
+  }
 
   @Post('signup')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
@@ -50,7 +65,7 @@ export class AuthController {
     // Set refresh token in HTTP-only cookie
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // Always use HTTPS - even in dev, use HTTPS proxy if needed
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
@@ -72,7 +87,7 @@ export class AuthController {
     // Set new refresh token in cookie (rotation)
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // Always use HTTPS
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
@@ -94,7 +109,7 @@ export class AuthController {
     // Clear cookie
     response.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // Always use HTTPS
       sameSite: 'strict',
       path: '/',
     });

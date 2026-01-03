@@ -4,9 +4,9 @@ import { create } from "zustand";
 
 // Check if we have a refresh token cookie (can't read HttpOnly, but we can check if auth was attempted)
 const hasAuthCookie = () => {
-  if (typeof document === 'undefined') return false;
-  // Check for any auth-related cookie or localStorage flag
-  return localStorage.getItem('auth_attempted') === 'true';
+  if (typeof window === 'undefined') return false;
+  // Check for auth flag in sessionStorage (cleared when browser tab closes)
+  return sessionStorage.getItem('auth_attempted') === 'true';
 };
 
 interface AuthState {
@@ -41,7 +41,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
       // Clear auth flag on 401
-      localStorage.removeItem('auth_attempted');
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('auth_attempted');
+      }
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -49,8 +51,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     const response = await api.post("/auth/login", { email, password });
     const { user, accessToken } = response.data;
-    // Mark that auth was attempted for future page loads
-    localStorage.setItem('auth_attempted', 'true');
+    // Mark that auth was attempted for future page loads (sessionStorage clears on tab close)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('auth_attempted', 'true');
+    }
     set({ user, accessToken, isAuthenticated: true, isLoading: false });
     return user;
   },
@@ -61,7 +65,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Ignore logout errors
     }
-    localStorage.removeItem('auth_attempted');
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('auth_attempted');
+    }
     set({ user: null, accessToken: null, isAuthenticated: false });
   },
 

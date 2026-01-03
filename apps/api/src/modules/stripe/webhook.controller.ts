@@ -144,6 +144,7 @@ export class WebhookController {
     }
 
     const amount = session.amount_total || 0;
+    // Platform fee: 20% as per PRD, creator receives 80%
     const platformFee = Math.round(amount * 0.2); // 20%
     const creatorEarnings = amount - platformFee; // 80%
 
