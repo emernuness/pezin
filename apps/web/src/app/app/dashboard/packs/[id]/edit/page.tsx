@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -707,6 +707,10 @@ export default function EditPackPage({ params }: EditPackPageProps) {
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black/95 border-none overflow-hidden [&>button]:hidden">
+          <DialogTitle className="sr-only">Visualizar mídia</DialogTitle>
+          <DialogDescription className="sr-only">
+            Visualização em tela cheia da mídia selecionada
+          </DialogDescription>
           {lightboxItems.length > 0 && (
             <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
               {/* Close button */}

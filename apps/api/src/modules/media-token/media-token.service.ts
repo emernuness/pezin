@@ -1,6 +1,7 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import * as crypto from 'crypto';
 
 export interface MediaTokenPayload {
@@ -23,7 +24,9 @@ export class MediaTokenService {
 
   constructor(
     private config: ConfigService,
-    private prisma: PrismaService
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => StorageService))
+    private storage: StorageService,
   ) {
     this.secret = this.config.get<string>('MEDIA_TOKEN_SECRET') || '';
     this.expiresIn =
@@ -136,7 +139,7 @@ export class MediaTokenService {
    */
   async resolveResourcePath(
     payload: MediaTokenPayload
-  ): Promise<{ path: string; contentType: string; filename?: string }> {
+  ): Promise<{ path: string; storagePath: string; contentType: string; filename?: string }> {
     const { sub: userId, res: resourceId, typ: type, pid: packId } = payload;
 
     if (type === 'avatar' || type === 'cover') {
@@ -164,6 +167,7 @@ export class MediaTokenService {
 
       return {
         path,
+        storagePath: path,
         contentType: payload.ct || 'image/webp',
         filename: payload.fn,
       };
@@ -182,6 +186,7 @@ export class MediaTokenService {
       // url field contains the storage key
       return {
         path: preview.url,
+        storagePath: preview.url,
         contentType: payload.ct || 'image/webp',
         filename: payload.fn,
       };
@@ -198,9 +203,17 @@ export class MediaTokenService {
 
     return {
       path: file.storageKey,
+      storagePath: file.storageKey,
       contentType: file.mimeType,
       filename: file.filename,
     };
+  }
+
+  /**
+   * Fetch file content from R2 storage
+   */
+  async fetchFromStorage(storagePath: string): Promise<Buffer> {
+    return this.storage.downloadFile(storagePath);
   }
 
   /**

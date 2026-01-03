@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class PurchasesService {
@@ -9,6 +10,7 @@ export class PurchasesService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private storage: StorageService,
   ) {
     const port = this.config.get('PORT') || 3001;
     this.apiBaseUrl = this.config.get('API_BASE_URL') || `http://localhost:${port}`;
@@ -75,6 +77,7 @@ export class PurchasesService {
           include: {
             creator: {
               select: {
+                id: true,
                 displayName: true,
                 slug: true,
                 profileImage: true
@@ -87,7 +90,8 @@ export class PurchasesService {
                 filename: true,
                 mimeType: true,
                 size: true,
-                order: true
+                order: true,
+                storageKey: true
               }
             },
             previews: true
@@ -100,7 +104,33 @@ export class PurchasesService {
       throw new NotFoundException('Compra não encontrada ou pagamento pendente.');
     }
 
-    // Transform URLs
+    // Transform URLs - generate secure media URLs for files
+    const filesWithUrls = purchase.pack.files.map((file) => ({
+      id: file.id,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      size: file.size,
+      order: file.order,
+      url: this.storage.generateMediaUrl(
+        purchase.pack.creator.id,
+        file.id,
+        'file',
+        packId,
+        file.storageKey,
+        file.mimeType
+      ),
+      thumbnailUrl: file.mimeType.startsWith('image/')
+        ? this.storage.generateMediaUrl(
+            purchase.pack.creator.id,
+            file.id,
+            'file',
+            packId,
+            file.storageKey,
+            file.mimeType
+          )
+        : null,
+    }));
+
     return {
       ...purchase,
       pack: {
@@ -109,6 +139,7 @@ export class PurchasesService {
           ...purchase.pack.creator,
           profileImage: this.transformAssetUrl(purchase.pack.creator.profileImage),
         },
+        files: filesWithUrls,
         previews: purchase.pack.previews.map((preview) => ({
           ...preview,
           url: this.transformAssetUrl(preview.url),

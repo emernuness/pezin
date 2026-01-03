@@ -138,7 +138,7 @@ export class StorageService {
 
   /**
    * Generate a secure media URL
-   * - In development: Returns presigned URL directly from R2
+   * - In development: Returns URL via API proxy (avoids CORS issues)
    * - In production: Returns tokenized URL via Cloudflare Worker
    */
   generateMediaUrl(
@@ -153,6 +153,20 @@ export class StorageService {
       throw new Error('MediaTokenService not initialized');
     }
 
+    // In development, use API proxy to avoid CORS issues
+    if (this.isDevelopment) {
+      const token = this.mediaTokenService.generateToken(
+        userId,
+        resourceId,
+        type,
+        packId,
+        filename,
+        contentType
+      );
+      return `${this.getApiBaseUrl()}/internal/media/proxy/${token}`;
+    }
+
+    // In production, use Cloudflare Worker CDN
     return this.mediaTokenService.generateMediaUrl(
       userId,
       resourceId,
@@ -176,6 +190,13 @@ export class StorageService {
    */
   isDevMode(): boolean {
     return this.isDevelopment;
+  }
+
+  /**
+   * Get the API base URL for proxy endpoints
+   */
+  getApiBaseUrl(): string {
+    return this.config.get<string>('API_BASE_URL') || 'http://localhost:3001';
   }
 
   /**

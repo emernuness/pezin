@@ -1,12 +1,11 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { ProtectedGallery, type GalleryItem } from "@/components/media";
 import { api } from "@/services/api";
-import { Download, ImageIcon, VideoIcon } from "lucide-react";
+import { ArrowLeft, ImageIcon, VideoIcon, Lock } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 interface PackViewerProps {
   params: {
@@ -18,6 +17,8 @@ interface PackFile {
   id: string;
   mimeType: string;
   filename: string;
+  url: string;
+  thumbnailUrl?: string;
 }
 
 interface Pack {
@@ -36,7 +37,6 @@ interface PurchaseData {
 export default function PackViewerPage({ params }: PackViewerProps) {
   const [purchase, setPurchase] = useState<PurchaseData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPack() {
@@ -52,119 +52,108 @@ export default function PackViewerPage({ params }: PackViewerProps) {
     fetchPack();
   }, [params.id]);
 
-  const handleDownload = async (fileId: string, filename: string) => {
-    try {
-      setDownloading(fileId);
-      const { data } = await api.post(
-        `/packs/${params.id}/files/${fileId}/download-url`,
-      );
-
-      const link = document.createElement("a");
-      link.href = data.url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { status?: number; data?: { retryAfter?: number } };
-      };
-      if (axiosError.response?.status === 429) {
-        const retryAfter = axiosError.response?.data?.retryAfter;
-        const hoursLeft = retryAfter ? Math.ceil(retryAfter / 3600) : 24;
-        toast.error(
-          `Limite de downloads atingido. Tente novamente em ${hoursLeft} hora${hoursLeft > 1 ? "s" : ""}.`,
-        );
-      } else {
-        toast.error("Erro ao gerar download. Tente novamente.");
-      }
-    } finally {
-      setDownloading(null);
-    }
-  };
-
-  const handleDownloadZip = () => {
-    toast.info("Funcionalidade de download ZIP em breve!");
-  };
-
-  if (loading)
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        Carregando...
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
-  if (!purchase)
+  }
+
+  if (!purchase) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        Pack nao encontrado
-      </div>
-    );
-
-  const { pack } = purchase;
-
-  return (
-    <main className="container mx-auto min-h-screen px-4 py-8">
-      <div className="mb-8">
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <Lock className="h-12 w-12 text-muted-foreground" />
+        <p className="text-muted-foreground">Pack não encontrado</p>
         <Link
           href="/app/me/purchases"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-sm text-primary hover:underline"
         >
           Voltar para Meus Packs
         </Link>
-        <div className="mt-4 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{pack.title}</h1>
-            <div className="mt-2 flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={pack.creator.profileImage} />
-                <AvatarFallback>{pack.creator.displayName[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-muted-foreground">
-                @{pack.creator.displayName}
+      </div>
+    );
+  }
+
+  const { pack } = purchase;
+
+  // Transform files to gallery items
+  const galleryItems: GalleryItem[] = pack.files.map((file) => ({
+    id: file.id,
+    url: file.url,
+    thumbnailUrl: file.thumbnailUrl,
+    type: file.mimeType.startsWith("video/") ? "video" : "image",
+    filename: file.filename,
+  }));
+
+  // Count images and videos
+  const imageCount = pack.files.filter((f) =>
+    f.mimeType.startsWith("image/")
+  ).length;
+  const videoCount = pack.files.filter((f) =>
+    f.mimeType.startsWith("video/")
+  ).length;
+
+  return (
+    <main className="container mx-auto min-h-screen px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <Link
+          href="/app/me/purchases"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para Meus Packs
+        </Link>
+
+        <div className="mt-6">
+          <h1 className="text-3xl font-bold text-foreground">{pack.title}</h1>
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={pack.creator.profileImage} />
+              <AvatarFallback>{pack.creator.displayName[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-muted-foreground">
+              por {pack.creator.displayName}
+            </span>
+          </div>
+        </div>
+
+        {/* Content stats */}
+        <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+          {imageCount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <ImageIcon className="h-4 w-4" />
+              <span>
+                {imageCount} {imageCount === 1 ? "foto" : "fotos"}
               </span>
             </div>
-          </div>
-          <Button onClick={handleDownloadZip} variant="secondary">
-            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-            Baixar Tudo (ZIP)
-          </Button>
+          )}
+          {videoCount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <VideoIcon className="h-4 w-4" />
+              <span>
+                {videoCount} {videoCount === 1 ? "vídeo" : "vídeos"}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {pack.files.map((file) => (
-          <div
-            key={file.id}
-            className="group relative overflow-hidden rounded-lg border border-border bg-muted"
-          >
-            <div className="aspect-square flex items-center justify-center bg-muted text-muted-foreground">
-              {file.mimeType.startsWith("image") ? (
-                <ImageIcon className="h-12 w-12" aria-hidden="true" />
-              ) : (
-                <VideoIcon className="h-12 w-12" aria-hidden="true" />
-              )}
-            </div>
+      {/* Protected Gallery */}
+      {galleryItems.length > 0 ? (
+        <ProtectedGallery items={galleryItems} columns={4} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Lock className="h-12 w-12 mb-4" />
+          <p>Nenhum conteúdo disponível</p>
+        </div>
+      )}
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/90 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="mb-2 px-2 text-center text-xs text-secondary-foreground truncate w-full">
-                {file.filename}
-              </span>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleDownload(file.id, file.filename)}
-                disabled={downloading === file.id}
-              >
-                {downloading === file.id ? (
-                  "..."
-                ) : (
-                  <Download className="h-4 w-4" aria-hidden="true" />
-                )}
-                <span className="sr-only">Baixar {file.filename}</span>
-              </Button>
-            </div>
-          </div>
-        ))}
+      {/* Footer notice */}
+      <div className="mt-8 rounded-lg bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+        <Lock className="inline-block h-4 w-4 mr-2" />
+        Conteúdo exclusivo. Visualização protegida dentro da plataforma.
       </div>
     </main>
   );

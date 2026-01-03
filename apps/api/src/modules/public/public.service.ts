@@ -33,6 +33,7 @@ export class PublicService {
   /**
    * Transform preview URL to secure token-based URL
    * Uses creator's userId for the token since previews are owned by creators
+   * In development, uses API proxy. In production, uses Cloudflare Worker.
    */
   private transformPreviewUrl(
     preview: { id: string; url: string },
@@ -49,7 +50,7 @@ export class PublicService {
       return this.transformAssetUrl(preview.url) || preview.url;
     }
 
-    // Generate secure token-based URL for R2 storage keys
+    // Generate secure token-based URL (uses API proxy in dev, Worker in prod)
     return this.storage.generateMediaUrl(
       creatorId,
       preview.id,
