@@ -1,8 +1,8 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { useState } from "react";
-import { PLACEHOLDER_IMAGE } from "@/utils/constants";
+import { useState, useEffect } from "react";
+import { PLACEHOLDER_IMAGE, PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 
 interface ImageWithFallbackProps extends Omit<ImageProps, "onError"> {
   fallbackSrc?: string;
@@ -32,6 +32,39 @@ export function ImageWithFallback({
           setImgSrc(fallbackSrc);
         }
       }}
+    />
+  );
+}
+
+interface SimpleImageWithFallbackProps {
+  src: string | undefined | null;
+  alt: string;
+  className?: string;
+  fallbackSrc?: string;
+}
+
+/**
+ * Simple img tag with automatic fallback on load error.
+ * Use this when you don't need next/image optimization.
+ */
+export function SimpleImageWithFallback({
+  src,
+  alt,
+  className = "",
+  fallbackSrc = PLACEHOLDER_IMAGE_SVG,
+}: SimpleImageWithFallbackProps) {
+  const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
+
+  useEffect(() => {
+    setImgSrc(src || fallbackSrc);
+  }, [src, fallbackSrc]);
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      onError={() => setImgSrc(fallbackSrc)}
+      className={className}
     />
   );
 }

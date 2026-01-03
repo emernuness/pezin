@@ -1,10 +1,10 @@
 import { BuyButton } from "@/components/BuyButton";
+import { SimpleImageWithFallback } from "@/components/common";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/services/api";
 import { formatCurrency } from "@/utils/formatters";
-import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 import { Check, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -71,8 +71,8 @@ export default async function PackPage({ params }: PackDetailProps) {
         <div className="space-y-4">
           <div className="overflow-hidden rounded-lg border bg-muted shadow-card">
             <div className="aspect-[3/4] w-full">
-              <img
-                src={pack.previews?.[0]?.url || PLACEHOLDER_IMAGE_SVG}
+              <SimpleImageWithFallback
+                src={pack.previews?.[0]?.url}
                 alt={pack.title}
                 className="h-full w-full object-cover"
               />
@@ -84,7 +84,7 @@ export default async function PackPage({ params }: PackDetailProps) {
                 key={preview.id}
                 className="aspect-square overflow-hidden rounded-md border bg-muted"
               >
-                <img
+                <SimpleImageWithFallback
                   src={preview.url}
                   alt="Preview"
                   className="h-full w-full object-cover"

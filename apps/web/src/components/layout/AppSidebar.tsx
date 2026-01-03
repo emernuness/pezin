@@ -86,6 +86,7 @@ export function AppSidebar() {
                     alt="Pack do Pezin"
                     width={140}
                     height={32}
+                    priority
                     className="h-10 w-auto"
                   />
 

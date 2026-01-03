@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/utils/formatters";
-import { PLACEHOLDER_IMAGE } from "@/utils/constants";
+import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
 
 interface PackCardProps {
   id: string;
@@ -27,13 +28,24 @@ export function PackCard({
   creatorSlug,
   purchased = false,
 }: PackCardProps) {
+  const [imgSrc, setImgSrc] = useState(imageUrl || PLACEHOLDER_IMAGE_SVG);
+
+  useEffect(() => {
+    setImgSrc(imageUrl || PLACEHOLDER_IMAGE_SVG);
+  }, [imageUrl]);
+
+  const handleError = () => {
+    setImgSrc(PLACEHOLDER_IMAGE_SVG);
+  };
+
   return (
     <Link href={purchased ? `/app/me/purchases/${id}` : `/app/pack/${id}`}>
       <div className="group relative overflow-hidden rounded-lg bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-cardHover border border-border/50">
         <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
           <img
-            src={imageUrl || PLACEHOLDER_IMAGE}
+            src={imgSrc}
             alt={title}
+            onError={handleError}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
