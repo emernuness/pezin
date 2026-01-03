@@ -16,6 +16,42 @@ import {
   WebhookEventType,
 } from '../interfaces';
 
+// Tipos de resposta da API EzzePay
+interface EzzePayChargeResponse {
+  transaction_id: string;
+  qrcode_base64?: string;
+  qrcode?: string;
+  copy_paste?: string;
+  emv?: string;
+  expiration_date: string;
+  status: string;
+}
+
+interface EzzePayPaymentStatusResponse {
+  transaction_id: string;
+  status: string;
+  paid_at?: string;
+  amount_paid?: number;
+}
+
+interface EzzePayPayoutResponse {
+  transfer_id: string;
+  status: string;
+  estimated_completion?: string;
+  completed_at?: string;
+  error_message?: string;
+}
+
+interface EzzePayWebhookPayload {
+  event_type?: string;
+  type?: string;
+  transaction_id?: string;
+  transfer_id?: string;
+  webhook_id?: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Adapter para o gateway EzzePay
  *
@@ -51,8 +87,8 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
     this.logRequest('generatePixCharge', request);
 
     try {
-      const response = await this.makeRequest('/v1/pix/qrcode', 'POST', {
-        amount: request.amount, // EzzePay aceita em centavos
+      const response = await this.makeRequest<EzzePayChargeResponse>('/v1/pix/qrcode', 'POST', {
+        amount: request.amount,
         reference_id: request.externalId,
         description: request.description,
         payer: {
@@ -68,8 +104,8 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
 
       return {
         gatewayId: response.transaction_id,
-        qrCode: response.qrcode_base64 || response.qrcode,
-        qrCodeText: response.copy_paste || response.emv,
+        qrCode: response.qrcode_base64 || response.qrcode || '',
+        qrCodeText: response.copy_paste || response.emv || '',
         expiresAt: new Date(response.expiration_date),
         status: this.mapPaymentStatus(response.status),
       };
@@ -83,7 +119,7 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
     this.logRequest('getPaymentStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/v1/pix/transaction/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<EzzePayPaymentStatusResponse>(`/v1/pix/transaction/${gatewayId}`, 'GET');
 
       this.logResponse('getPaymentStatus', response);
 
@@ -104,7 +140,7 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
     this.logRequest('executePayout', request);
 
     try {
-      const response = await this.makeRequest('/v1/pix/transfer', 'POST', {
+      const response = await this.makeRequest<EzzePayPayoutResponse>('/v1/pix/transfer', 'POST', {
         amount: request.amount,
         reference_id: request.externalId,
         pix_key: request.pixKey,
@@ -135,7 +171,7 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
     this.logRequest('getPayoutStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/v1/pix/transfer/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<EzzePayPayoutResponse>(`/v1/pix/transfer/${gatewayId}`, 'GET');
 
       this.logResponse('getPayoutStatus', response);
 
@@ -177,13 +213,13 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
 
   parseWebhookEvent(payload: Buffer): ParsedWebhookEvent {
     try {
-      const data = JSON.parse(payload.toString());
+      const data = JSON.parse(payload.toString()) as EzzePayWebhookPayload;
 
       return {
-        type: this.mapWebhookEventType(data.event_type || data.type),
-        gatewayId: data.transaction_id || data.transfer_id,
-        eventId: data.webhook_id || `${data.transaction_id}-${Date.now()}`,
-        data,
+        type: this.mapWebhookEventType(data.event_type || data.type || ''),
+        gatewayId: data.transaction_id || data.transfer_id || '',
+        eventId: data.webhook_id || `${data.transaction_id || data.transfer_id}-${Date.now()}`,
+        data: data as Record<string, unknown>,
         timestamp: data.created_at ? new Date(data.created_at) : new Date(),
       };
     } catch {
@@ -195,11 +231,11 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
   // PRIVATE METHODS
   // ==========================================
 
-  private async makeRequest(
+  private async makeRequest<T>(
     endpoint: string,
     method: 'GET' | 'POST',
     body?: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<T> {
     const url = `${this.apiUrl}${endpoint}`;
 
     const response = await fetch(url, {
@@ -212,7 +248,7 @@ export class EzzePayAdapter extends BaseGatewayAdapter {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    const data = await response.json() as T & { message?: string; error_description?: string };
 
     if (!response.ok) {
       throw {

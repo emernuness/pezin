@@ -16,6 +16,40 @@ import {
   WebhookEventType,
 } from '../interfaces';
 
+// Tipos de resposta da API SuitPay
+interface SuitPayChargeResponse {
+  id: string;
+  qr_code: string;
+  qr_code_text?: string;
+  pix_code?: string;
+  expires_at: string;
+  status: string;
+}
+
+interface SuitPayPaymentStatusResponse {
+  id: string;
+  status: string;
+  paid_at?: string;
+  paid_amount?: number;
+}
+
+interface SuitPayPayoutResponse {
+  id: string;
+  status: string;
+  estimated_at?: string;
+  completed_at?: string;
+  failure_reason?: string;
+}
+
+interface SuitPayWebhookPayload {
+  event: string;
+  id?: string;
+  transaction_id?: string;
+  event_id?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Adapter para o gateway SuitPay
  *
@@ -51,7 +85,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
     this.logRequest('generatePixCharge', request);
 
     try {
-      const response = await this.makeRequest('/pix/charge', 'POST', {
+      const response = await this.makeRequest<SuitPayChargeResponse>('/pix/charge', 'POST', {
         value: this.formatAmount(request.amount),
         external_id: request.externalId,
         description: request.description,
@@ -69,7 +103,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
       return {
         gatewayId: response.id,
         qrCode: response.qr_code,
-        qrCodeText: response.qr_code_text || response.pix_code,
+        qrCodeText: response.qr_code_text || response.pix_code || '',
         expiresAt: new Date(response.expires_at),
         status: this.mapPaymentStatus(response.status),
       };
@@ -83,7 +117,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
     this.logRequest('getPaymentStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/pix/charge/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<SuitPayPaymentStatusResponse>(`/pix/charge/${gatewayId}`, 'GET');
 
       this.logResponse('getPaymentStatus', response);
 
@@ -104,7 +138,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
     this.logRequest('executePayout', request);
 
     try {
-      const response = await this.makeRequest('/pix/payout', 'POST', {
+      const response = await this.makeRequest<SuitPayPayoutResponse>('/pix/payout', 'POST', {
         value: this.formatAmount(request.amount),
         external_id: request.externalId,
         pix_key: request.pixKey,
@@ -131,7 +165,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
     this.logRequest('getPayoutStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/pix/payout/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<SuitPayPayoutResponse>(`/pix/payout/${gatewayId}`, 'GET');
 
       this.logResponse('getPayoutStatus', response);
 
@@ -173,13 +207,13 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
 
   parseWebhookEvent(payload: Buffer): ParsedWebhookEvent {
     try {
-      const data = JSON.parse(payload.toString());
+      const data = JSON.parse(payload.toString()) as SuitPayWebhookPayload;
 
       return {
         type: this.mapWebhookEventType(data.event),
-        gatewayId: data.id || data.transaction_id,
-        eventId: data.event_id || `${data.id}-${data.event}`,
-        data,
+        gatewayId: data.id || data.transaction_id || '',
+        eventId: data.event_id || `${data.id || data.transaction_id}-${data.event}`,
+        data: data as Record<string, unknown>,
         timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
       };
     } catch {
@@ -191,11 +225,11 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
   // PRIVATE METHODS
   // ==========================================
 
-  private async makeRequest(
+  private async makeRequest<T>(
     endpoint: string,
     method: 'GET' | 'POST',
     body?: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<T> {
     const url = `${this.apiUrl}${endpoint}`;
 
     const response = await fetch(url, {
@@ -208,7 +242,7 @@ export class SuitPayAdapter extends BaseGatewayAdapter {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    const data = await response.json() as T & { message?: string; error?: string };
 
     if (!response.ok) {
       throw {

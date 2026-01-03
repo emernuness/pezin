@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { SuitPayAdapter } from './adapters/suitpay.adapter';
 import { EzzePayAdapter } from './adapters/ezzepay.adapter';
 import { VolutiAdapter } from './adapters/voluti.adapter';
 import { GatewayFactory } from './factories/gateway.factory';
+import { PaymentService } from './payment.service';
+import { PaymentController } from './payment.controller';
 
 /**
  * Módulo de Pagamentos - Gateway Agnostic
@@ -12,6 +15,12 @@ import { GatewayFactory } from './factories/gateway.factory';
  * gateways de pagamento PIX (SuitPay, EzzePay, Voluti).
  *
  * O gateway ativo é selecionado via ENV_CURRENT_GATEWAY.
+ *
+ * Endpoints:
+ * - POST /payment/checkout - Criar checkout PIX
+ * - GET /payment/:id/status - Consultar status do pagamento
+ * - GET /payment/my-purchases - Listar compras do usuário
+ * - GET /payment/my-sales - Listar vendas do criador
  *
  * @example
  * ```typescript
@@ -24,7 +33,8 @@ import { GatewayFactory } from './factories/gateway.factory';
  * ```
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, PrismaModule],
+  controllers: [PaymentController],
   providers: [
     // Adapters (um para cada gateway)
     SuitPayAdapter,
@@ -33,10 +43,16 @@ import { GatewayFactory } from './factories/gateway.factory';
 
     // Factory que seleciona o gateway ativo
     GatewayFactory,
+
+    // Service principal
+    PaymentService,
   ],
   exports: [
     // Exportar factory para uso em outros módulos
     GatewayFactory,
+
+    // Exportar service para uso em outros módulos (webhook, etc)
+    PaymentService,
 
     // Exportar adapters individuais para casos específicos
     SuitPayAdapter,

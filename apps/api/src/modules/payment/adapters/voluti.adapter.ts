@@ -16,6 +16,46 @@ import {
   WebhookEventType,
 } from '../interfaces';
 
+// Tipos de resposta da API Voluti
+interface VolutiChargeResponse {
+  txid?: string;
+  id?: string;
+  pixCopiaECola?: string;
+  qrcode?: string;
+  brcode?: string;
+  status: string;
+}
+
+interface VolutiPaymentStatusResponse {
+  txid: string;
+  status: string;
+  pix?: Array<{
+    horario?: string;
+    valor?: string;
+  }>;
+}
+
+interface VolutiPayoutResponse {
+  idTransacao?: string;
+  id?: string;
+  status: string;
+  previsaoEnvio?: string;
+  dataEfetivacao?: string;
+  motivoRejeicao?: string;
+}
+
+interface VolutiWebhookPayload {
+  txid?: string;
+  idTransacao?: string;
+  idTransferencia?: string;
+  pix?: unknown[];
+  tipo?: string;
+  status?: string;
+  webhookId?: string;
+  horario?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Adapter para o gateway Voluti
  *
@@ -53,24 +93,23 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     this.validateChargeRequest(request);
     this.logRequest('generatePixCharge', request);
 
+    const normalizedDoc = this.normalizeDocument(request.customer.document);
+    const isCpf = normalizedDoc.length === 11;
+
     try {
-      const response = await this.makeRequest('/api/v1/pix/cob', 'POST', {
+      const response = await this.makeRequest<VolutiChargeResponse>('/api/v1/pix/cob', 'POST', {
         valor: {
           original: this.formatAmount(request.amount),
         },
-        chave: this.clientId, // Chave PIX da empresa
+        chave: this.clientId,
         txid: request.externalId,
         calendario: {
-          expiracao: (request.expiresInMinutes || 60) * 60, // Voluti usa segundos
+          expiracao: (request.expiresInMinutes || 60) * 60,
         },
         devedor: {
           nome: request.customer.name,
-          cpf: this.normalizeDocument(request.customer.document).length === 11
-            ? this.normalizeDocument(request.customer.document)
-            : undefined,
-          cnpj: this.normalizeDocument(request.customer.document).length === 14
-            ? this.normalizeDocument(request.customer.document)
-            : undefined,
+          cpf: isCpf ? normalizedDoc : undefined,
+          cnpj: !isCpf ? normalizedDoc : undefined,
         },
         solicitacaoPagador: request.description,
         infoAdicionais: request.metadata
@@ -80,12 +119,12 @@ export class VolutiAdapter extends BaseGatewayAdapter {
 
       this.logResponse('generatePixCharge', response);
 
+      const qrCodeText = response.pixCopiaECola || response.brcode || '';
+
       return {
-        gatewayId: response.txid || response.id,
-        qrCode: response.pixCopiaECola
-          ? Buffer.from(response.pixCopiaECola).toString('base64')
-          : response.qrcode,
-        qrCodeText: response.pixCopiaECola || response.brcode,
+        gatewayId: response.txid || response.id || '',
+        qrCode: qrCodeText ? Buffer.from(qrCodeText).toString('base64') : response.qrcode || '',
+        qrCodeText,
         expiresAt: new Date(Date.now() + (request.expiresInMinutes || 60) * 60 * 1000),
         status: this.mapPaymentStatus(response.status),
       };
@@ -99,17 +138,17 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     this.logRequest('getPaymentStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/api/v1/pix/cob/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<VolutiPaymentStatusResponse>(`/api/v1/pix/cob/${gatewayId}`, 'GET');
 
       this.logResponse('getPaymentStatus', response);
+
+      const pixInfo = response.pix?.[0];
 
       return {
         gatewayId: response.txid,
         status: this.mapPaymentStatus(response.status),
-        paidAt: response.pix?.[0]?.horario ? new Date(response.pix[0].horario) : undefined,
-        paidAmount: response.pix?.[0]?.valor
-          ? this.toCents(parseFloat(response.pix[0].valor))
-          : undefined,
+        paidAt: pixInfo?.horario ? new Date(pixInfo.horario) : undefined,
+        paidAmount: pixInfo?.valor ? this.toCents(parseFloat(pixInfo.valor)) : undefined,
       };
     } catch (error) {
       this.logError('getPaymentStatus', error);
@@ -121,20 +160,19 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     this.validatePayoutRequest(request);
     this.logRequest('executePayout', request);
 
+    const normalizedDoc = this.normalizeDocument(request.recipientDocument);
+    const isCpf = normalizedDoc.length === 11;
+
     try {
-      const response = await this.makeRequest('/api/v1/pix/envio', 'POST', {
+      const response = await this.makeRequest<VolutiPayoutResponse>('/api/v1/pix/envio', 'POST', {
         valor: this.formatAmount(request.amount),
         idTransacao: request.externalId,
         chave: request.pixKey,
         tipoChave: this.mapPixKeyType(request.pixKeyType),
         favorecido: {
           nome: request.recipientName,
-          cpf: this.normalizeDocument(request.recipientDocument).length === 11
-            ? this.normalizeDocument(request.recipientDocument)
-            : undefined,
-          cnpj: this.normalizeDocument(request.recipientDocument).length === 14
-            ? this.normalizeDocument(request.recipientDocument)
-            : undefined,
+          cpf: isCpf ? normalizedDoc : undefined,
+          cnpj: !isCpf ? normalizedDoc : undefined,
         },
         descricao: request.description || 'Saque',
       });
@@ -142,11 +180,11 @@ export class VolutiAdapter extends BaseGatewayAdapter {
       this.logResponse('executePayout', response);
 
       return {
-        gatewayId: response.idTransacao || response.id,
+        gatewayId: response.idTransacao || response.id || '',
         status: this.mapPayoutStatus(response.status),
         estimatedCompletionAt: response.previsaoEnvio
           ? new Date(response.previsaoEnvio)
-          : new Date(Date.now() + 5 * 60 * 1000), // 5 minutos default
+          : new Date(Date.now() + 5 * 60 * 1000),
       };
     } catch (error) {
       this.logError('executePayout', error);
@@ -158,12 +196,12 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     this.logRequest('getPayoutStatus', { gatewayId });
 
     try {
-      const response = await this.makeRequest(`/api/v1/pix/envio/${gatewayId}`, 'GET');
+      const response = await this.makeRequest<VolutiPayoutResponse>(`/api/v1/pix/envio/${gatewayId}`, 'GET');
 
       this.logResponse('getPayoutStatus', response);
 
       return {
-        gatewayId: response.idTransacao,
+        gatewayId: response.idTransacao || response.id || '',
         status: this.mapPayoutStatus(response.status),
         completedAt: response.dataEfetivacao ? new Date(response.dataEfetivacao) : undefined,
         failureReason: response.motivoRejeicao,
@@ -181,7 +219,6 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     }
 
     try {
-      // Voluti usa SHA-512
       const expectedSignature = createHmac('sha512', this.webhookSecret)
         .update(payload)
         .digest('hex');
@@ -201,14 +238,13 @@ export class VolutiAdapter extends BaseGatewayAdapter {
 
   parseWebhookEvent(payload: Buffer): ParsedWebhookEvent {
     try {
-      const data = JSON.parse(payload.toString());
+      const data = JSON.parse(payload.toString()) as VolutiWebhookPayload;
 
-      // Voluti envia eventos em formato diferente
       const isPayment = !!data.pix || data.tipo === 'COBRANCA';
       const isPayout = data.tipo === 'ENVIO' || !!data.idTransferencia;
 
       let type: WebhookEventType = 'payment.pending';
-      let gatewayId = data.txid || data.idTransacao || data.idTransferencia;
+      const gatewayId = data.txid || data.idTransacao || data.idTransferencia || '';
 
       if (isPayment) {
         type = this.mapWebhookEventType(data.status || 'CONCLUIDA');
@@ -224,7 +260,7 @@ export class VolutiAdapter extends BaseGatewayAdapter {
         type,
         gatewayId,
         eventId: data.webhookId || `${gatewayId}-${Date.now()}`,
-        data,
+        data: data as Record<string, unknown>,
         timestamp: data.horario ? new Date(data.horario) : new Date(),
       };
     } catch {
@@ -236,11 +272,11 @@ export class VolutiAdapter extends BaseGatewayAdapter {
   // PRIVATE METHODS
   // ==========================================
 
-  private async makeRequest(
+  private async makeRequest<T>(
     endpoint: string,
     method: 'GET' | 'POST',
     body?: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<T> {
     const url = `${this.apiUrl}${endpoint}`;
 
     const response = await fetch(url, {
@@ -253,7 +289,7 @@ export class VolutiAdapter extends BaseGatewayAdapter {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    const data = await response.json() as T & { mensagem?: string; message?: string; error?: string };
 
     if (!response.ok) {
       throw {
@@ -339,7 +375,6 @@ export class VolutiAdapter extends BaseGatewayAdapter {
     }
 
     if (err.status === 400 || err.status === 422) {
-      // Verificar se é erro de chave PIX inválida
       if (err.message?.toLowerCase().includes('chave') || err.message?.toLowerCase().includes('pix')) {
         return new GatewayError('INVALID_PIX_KEY', err.message || 'Chave PIX inválida', err.data);
       }

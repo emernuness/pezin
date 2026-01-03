@@ -6,6 +6,7 @@ import { RawBodyMiddleware } from './common/middleware/raw-body.middleware';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StripeModule } from './modules/stripe/stripe.module';
+import { PaymentModule } from './modules/payment/payment.module';
 import { PacksModule } from './modules/packs/packs.module';
 import { PublicModule } from './modules/public/public.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -62,7 +63,8 @@ import { HealthController } from './modules/health/health.controller';
     MediaModule,
     MediaTokenModule,
     AuthModule,
-    StripeModule,
+    StripeModule,    // Legacy - será removido na Sprint 8
+    PaymentModule,   // Gateway Agnostic - novo sistema
     PacksModule,
     PublicModule,
     DashboardModule,
@@ -73,7 +75,13 @@ import { HealthController } from './modules/health/health.controller';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply raw body middleware to webhook route
-    consumer.apply(RawBodyMiddleware).forRoutes('webhooks/stripe');
+    // Apply raw body middleware to webhook routes
+    // Stripe (legacy) e novos gateways PIX
+    consumer.apply(RawBodyMiddleware).forRoutes(
+      'webhooks/stripe',
+      'webhooks/suitpay',
+      'webhooks/ezzepay',
+      'webhooks/voluti',
+    );
   }
 }
