@@ -1,6 +1,7 @@
 // Schemas
 export * from './schemas/auth.schema';
 export * from './schemas/pack.schema';
+export * from './schemas/payment.schema';
 
 // Types
 export * from './types/user.types';
