@@ -320,43 +320,6 @@ async function seedDownloadLogs(
   return logCount;
 }
 
-async function seedStripeEvents() {
-  console.log('\n🔔 Seeding Stripe events (demo)...');
-
-  const events = [
-    {
-      id: 'evt_demo_checkout_1',
-      type: 'checkout.session.completed',
-      processed: true,
-      processedAt: new Date(),
-      payload: JSON.stringify({ demo: true, session_id: 'cs_demo_1' }),
-    },
-    {
-      id: 'evt_demo_checkout_2',
-      type: 'checkout.session.completed',
-      processed: true,
-      processedAt: new Date(),
-      payload: JSON.stringify({ demo: true, session_id: 'cs_demo_2' }),
-    },
-    {
-      id: 'evt_demo_payout_1',
-      type: 'payout.paid',
-      processed: true,
-      processedAt: new Date(),
-      payload: JSON.stringify({ demo: true, payout_id: 'po_demo_1' }),
-    },
-  ];
-
-  for (const event of events) {
-    await prisma.stripeEvent.upsert({
-      where: { id: event.id },
-      update: {},
-      create: event,
-    });
-  }
-
-  console.log(`  Total: ${events.length} Stripe events created`);
-}
 
 async function main() {
   console.log('🌱 Pack do Pezin - Database Seeder');
@@ -385,9 +348,6 @@ async function main() {
 
   // Seed download logs
   await seedDownloadLogs(buyers, packs);
-
-  // Seed Stripe events
-  await seedStripeEvents();
 
   console.log('\n=====================================');
   console.log('✅ Seeding completed successfully!');

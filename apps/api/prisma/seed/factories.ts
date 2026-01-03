@@ -20,8 +20,6 @@ export interface UserSeedData {
   birthDate: Date;
   userType: UserType;
   emailVerified: boolean;
-  stripeAccountId: string | null;
-  stripeConnected: boolean;
 }
 
 export interface PackSeedData {
@@ -251,9 +249,7 @@ export function createDemoCreator(index: number): UserSeedData {
     coverImage: `/covers/cover_${String((index % 15) + 1).padStart(2, '0')}.jpg`,
     birthDate: generateAdultBirthDate(),
     userType: 'creator' as UserType,
-    emailVerified: index < 8, // Most creators are verified
-    stripeAccountId: index < 8 ? `acct_demo_${slug}` : null,
-    stripeConnected: index < 8,
+    emailVerified: index < 8,
   };
 }
 
@@ -272,8 +268,6 @@ export function createDemoBuyer(index: number): UserSeedData {
     birthDate: generateAdultBirthDate(),
     userType: 'consumer' as UserType,
     emailVerified: index < 6,
-    stripeAccountId: null,
-    stripeConnected: false,
   };
 }
 

@@ -282,6 +282,7 @@ export const GATEWAY_NAMES = {
   SUITPAY: 'suitpay',
   EZZEPAY: 'ezzepay',
   VOLUTI: 'voluti',
+  MOCK: 'mock',
 } as const;
 
 export type GatewayName = (typeof GATEWAY_NAMES)[keyof typeof GATEWAY_NAMES];

@@ -4,6 +4,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { SuitPayAdapter } from './adapters/suitpay.adapter';
 import { EzzePayAdapter } from './adapters/ezzepay.adapter';
 import { VolutiAdapter } from './adapters/voluti.adapter';
+import { MockAdapter } from './adapters/mock.adapter';
 import { GatewayFactory } from './factories/gateway.factory';
 import { PaymentService } from './payment.service';
 import { PaymentController } from './payment.controller';
@@ -40,6 +41,7 @@ import { PaymentController } from './payment.controller';
     SuitPayAdapter,
     EzzePayAdapter,
     VolutiAdapter,
+    MockAdapter,
 
     // Factory que seleciona o gateway ativo
     GatewayFactory,
@@ -58,6 +60,7 @@ import { PaymentController } from './payment.controller';
     SuitPayAdapter,
     EzzePayAdapter,
     VolutiAdapter,
+    MockAdapter,
   ],
 })
 export class PaymentModule {}

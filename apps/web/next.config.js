@@ -93,7 +93,7 @@ const nextConfig = {
               "font-src 'self' data:",
               "connect-src 'self' https://api.stripe.com http://localhost:3001 http://localhost:8787",
               "frame-src 'self' https://js.stripe.com",
-              "media-src 'self' blob:",
+              "media-src 'self' http://localhost:* blob:",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

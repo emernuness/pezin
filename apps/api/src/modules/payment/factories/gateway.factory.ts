@@ -9,6 +9,7 @@ import {
 import { SuitPayAdapter } from '../adapters/suitpay.adapter';
 import { EzzePayAdapter } from '../adapters/ezzepay.adapter';
 import { VolutiAdapter } from '../adapters/voluti.adapter';
+import { MockAdapter } from '../adapters/mock.adapter';
 
 /**
  * Factory para criação de gateways de pagamento
@@ -35,6 +36,7 @@ export class GatewayFactory {
     private readonly suitPayAdapter: SuitPayAdapter,
     private readonly ezzePayAdapter: EzzePayAdapter,
     private readonly volutiAdapter: VolutiAdapter,
+    private readonly mockAdapter: MockAdapter,
   ) {
     this.initializeGateways();
   }
@@ -46,6 +48,7 @@ export class GatewayFactory {
     this.gateways.set(GATEWAY_NAMES.SUITPAY, this.suitPayAdapter);
     this.gateways.set(GATEWAY_NAMES.EZZEPAY, this.ezzePayAdapter);
     this.gateways.set(GATEWAY_NAMES.VOLUTI, this.volutiAdapter);
+    this.gateways.set(GATEWAY_NAMES.MOCK, this.mockAdapter);
 
     this.logger.log(`Gateways inicializados: ${Array.from(this.gateways.keys()).join(', ')}`);
   }
