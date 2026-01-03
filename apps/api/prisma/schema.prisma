@@ -32,6 +32,39 @@ enum WithdrawalStatus {
   failed
 }
 
+// ==========================================
+// GATEWAY AGNOSTIC FINANCIAL MODULE - ENUMS
+// ==========================================
+
+enum LedgerEntryType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionType {
+  SALE          // Venda de pack (crédito para criador)
+  PLATFORM_FEE  // Taxa da plataforma (crédito para plataforma)
+  PAYOUT        // Saque para criador (débito da wallet)
+  REFUND        // Reembolso (débito da wallet)
+  ADJUSTMENT    // Ajuste manual (admin)
+  RELEASE       // Liberação de saldo congelado para disponível
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  expired
+  cancelled
+  refunded
+}
+
+enum PayoutStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -59,9 +92,13 @@ model User {
   addressCity         String?
   addressState        String?
 
-  // Stripe Connect (for creators)
+  // Stripe Connect (for creators) - LEGACY
   stripeAccountId String? @unique
   stripeConnected Boolean @default(false)
+
+  // PIX Key for receiving payouts (Gateway Agnostic)
+  pixKey     String?
+  pixKeyType String? // 'cpf', 'cnpj', 'email', 'phone', 'evp'
 
   // Email verification
   verificationToken String?
@@ -74,9 +111,15 @@ model User {
   // Relations
   refreshTokens RefreshToken[]
   packs         Pack[]
-  purchases     Purchase[]
-  withdrawals   Withdrawal[]
+  purchases     Purchase[]     // Legacy Stripe purchases
+  withdrawals   Withdrawal[]   // Legacy Stripe withdrawals
   downloadLogs  DownloadLog[]
+
+  // Gateway Agnostic Relations
+  wallet          Wallet?
+  paymentsBuyer   Payment[]    @relation("PaymentsBuyer")
+  paymentsCreator Payment[]    @relation("PaymentsCreator")
+  payouts         Payout[]
 
   @@index([email])
   @@index([userType])
@@ -122,7 +165,8 @@ model Pack {
   // Relations
   previews  PackPreview[]
   files     PackFile[]
-  purchases Purchase[]
+  purchases Purchase[]   // Legacy Stripe purchases
+  payments  Payment[]    // Gateway Agnostic payments
 
   @@index([creatorId, status])
   @@index([status, publishedAt])
@@ -220,7 +264,7 @@ model DownloadLog {
   @@index([userId, fileId, dateKey])
 }
 
-// Para idempotência de webhooks Stripe
+// Para idempotência de webhooks Stripe (LEGACY)
 model StripeEvent {
   id          String   @id // Stripe event ID
   type        String
@@ -231,4 +275,183 @@ model StripeEvent {
   createdAt DateTime @default(now())
 
   @@index([id, processed])
+}
+
+// ==========================================
+// GATEWAY AGNOSTIC FINANCIAL MODULE - MODELS
+// ==========================================
+
+// Carteira virtual do criador
+model Wallet {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Saldos (em centavos)
+  currentBalance Int @default(0) // Saldo disponível para saque
+  frozenBalance  Int @default(0) // Saldo retido (14 dias anti-fraude)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ledgerEntries LedgerEntry[]
+  payouts       Payout[]
+
+  @@index([userId])
+}
+
+// Registro contábil (double-entry bookkeeping simplificado)
+model LedgerEntry {
+  id String @id @default(cuid())
+
+  // Referência à carteira (origem ou destino)
+  walletId String?
+  wallet   Wallet? @relation(fields: [walletId], references: [id])
+
+  // Para transações da plataforma (sem wallet de usuário)
+  isPlatformEntry Boolean @default(false)
+
+  // Tipo de entrada
+  type            LedgerEntryType
+  transactionType TransactionType
+
+  // Valor em centavos
+  amount       Int
+  balanceAfter Int // Snapshot do saldo após a transação
+
+  // Referências às transações originais
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  payoutId  String?
+  payout    Payout?  @relation(fields: [payoutId], references: [id])
+
+  // Auditoria
+  description String?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
+  @@index([paymentId])
+  @@index([payoutId])
+  @@index([transactionType])
+  @@index([createdAt])
+}
+
+// Pagamento via PIX (substitui Purchase para novos pagamentos)
+model Payment {
+  id String @id @default(cuid())
+
+  // Participantes
+  buyerId   String
+  buyer     User   @relation("PaymentsBuyer", fields: [buyerId], references: [id])
+  creatorId String
+  creator   User   @relation("PaymentsCreator", fields: [creatorId], references: [id])
+  packId    String
+  pack      Pack   @relation(fields: [packId], references: [id])
+
+  // Valores em centavos
+  amount          Int // Valor total pago pelo comprador
+  platformFee     Int // 20% para plataforma
+  creatorEarnings Int // 80% para criador
+
+  // Gateway
+  gateway   String  // 'suitpay', 'ezzepay', 'voluti'
+  gatewayId String? // ID da transação no gateway
+
+  // PIX
+  pixQrCode     String?   @db.Text // QR Code base64
+  pixQrCodeText String?   @db.Text // PIX Copia e Cola
+  pixExpiresAt  DateTime?
+
+  // Status
+  status PaymentStatus @default(pending)
+
+  // Anti-fraude: data em que o valor fica disponível para saque
+  availableAt DateTime // +14 dias após pagamento
+
+  // Flag para indicar se o saldo já foi liberado (frozen → available)
+  balanceReleased Boolean @default(false)
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  paidAt     DateTime?
+  expiredAt  DateTime?
+  refundedAt DateTime?
+
+  // Relations
+  ledgerEntries LedgerEntry[]
+
+  // Idempotência: evita compra duplicada pendente do mesmo usuário para o mesmo pack
+  @@unique([buyerId, packId, status])
+  @@index([buyerId])
+  @@index([creatorId, status])
+  @@index([packId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([availableAt, balanceReleased])
+}
+
+// Saque via PIX
+model Payout {
+  id String @id @default(cuid())
+
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id])
+  walletId  String
+  wallet    Wallet @relation(fields: [walletId], references: [id])
+
+  // Valor em centavos
+  amount Int
+
+  // Gateway
+  gateway   String  // 'suitpay', 'ezzepay', 'voluti'
+  gatewayId String? // ID do payout no gateway
+
+  // PIX destino
+  pixKey            String
+  pixKeyType        String // 'cpf', 'cnpj', 'email', 'phone', 'evp'
+  recipientName     String
+  recipientDocument String // CPF/CNPJ
+
+  // Status
+  status PayoutStatus @default(pending)
+
+  // Timestamps
+  requestedAt   DateTime  @default(now())
+  processedAt   DateTime?
+  completedAt   DateTime?
+  failedAt      DateTime?
+  failureReason String?
+
+  // Relations
+  ledgerEntries LedgerEntry[]
+
+  @@index([creatorId, status])
+  @@index([walletId])
+  @@index([gatewayId])
+}
+
+// Evento de webhook genérico (para qualquer gateway)
+model WebhookEvent {
+  id String @id @default(cuid())
+
+  gateway        String // 'suitpay', 'ezzepay', 'voluti'
+  gatewayEventId String // ID original do evento no gateway
+  eventType      String // 'payment.paid', 'payment.expired', 'payout.completed', etc.
+
+  payload String @db.Text // JSON do evento
+
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+
+  error      String?
+  retryCount Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([gateway, gatewayEventId])
+  @@index([gateway, processed])
+  @@index([createdAt])
 }
