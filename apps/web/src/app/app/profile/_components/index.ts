@@ -7,6 +7,7 @@ export * from "./AddressCard";
 export * from "./BasicInfoCard";
 export * from "./EmailVerificationAlert";
 export * from "./PersonalDataCard";
+export * from "./PixKeyCard";
 export * from "./ProfileImageUploader";
 export * from "./ProfileSkeleton";
 export * from "./types";

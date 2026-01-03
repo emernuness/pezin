@@ -20,8 +20,10 @@ import {
   UpdateProfileInput,
   ChangePasswordInput,
   UpdateCreatorProfileInput,
+  UpdatePixKeyInput,
   User,
   UserAddress,
+  PixKeyType,
 } from '@pack-do-pezin/shared';
 
 // Allowed image types for profile
@@ -406,12 +408,13 @@ export class AuthService {
       birthDate: user.birthDate,
       userType: user.userType,
       emailVerified: user.emailVerified,
-      stripeConnected: user.stripeConnected,
       createdAt: user.createdAt,
       fullName: user.fullName,
       cpf: user.cpf,
       phone: user.phone,
       address,
+      pixKey: user.pixKey,
+      pixKeyType: user.pixKeyType as PixKeyType | null,
     };
   }
 
@@ -611,5 +614,58 @@ export class AuthService {
     }
 
     return { message: 'Email de verificação reenviado!' };
+  }
+
+  // PIX Key Methods
+  async updatePixKey(userId: string, dto: UpdatePixKeyInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (user.userType !== 'creator') {
+      throw new BadRequestException('Apenas criadores podem configurar chave PIX');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        pixKey: dto.pixKey,
+        pixKeyType: dto.pixKeyType,
+      },
+    });
+
+    this.logger.log(`PIX key updated for user: ${user.email}`);
+
+    return { user: this.formatUser(updatedUser) };
+  }
+
+  async removePixKey(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (!user.pixKey) {
+      throw new BadRequestException('Nenhuma chave PIX configurada');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        pixKey: null,
+        pixKeyType: null,
+      },
+    });
+
+    this.logger.log(`PIX key removed for user: ${user.email}`);
+
+    return { user: this.formatUser(updatedUser) };
   }
 }

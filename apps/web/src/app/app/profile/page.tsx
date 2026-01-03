@@ -14,6 +14,7 @@ import {
   BasicInfoCard,
   EmailVerificationAlert,
   PersonalDataCard,
+  PixKeyCard,
   ProfileImageUploader,
   ProfileSkeleton,
 } from "./_components";
@@ -202,6 +203,19 @@ export default function ProfilePage() {
           />
         )}
 
+        {/* PIX Key - Creators Only */}
+        {isCreator && (
+          <PixKeyCard
+            currentPixKey={user?.pixKey || null}
+            currentPixKeyType={user?.pixKeyType || null}
+            onPixKeyUpdate={(pixKey, pixKeyType) => {
+              if (user) {
+                setUser({ ...user, pixKey, pixKeyType });
+              }
+            }}
+          />
+        )}
+
         {/* Error and Success Messages */}
         {error && (
           <div className="flex items-center gap-2 text-sm text-destructive">
@@ -238,7 +252,7 @@ export default function ProfilePage() {
       <AccountInfoCard
         userType={user?.userType || "consumer"}
         emailVerified={user?.emailVerified || false}
-        stripeConnected={user?.stripeConnected}
+        pixKeyConfigured={!!user?.pixKey}
         hasCompleteData={!!hasCompleteCreatorData}
         birthDate={user?.birthDate}
         createdAt={user?.createdAt}

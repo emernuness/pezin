@@ -179,6 +179,42 @@ export const changePasswordSchema = z
     path: ['confirmNewPassword'],
   });
 
+// Schema para configuração de chave PIX
+export const pixKeyTypeSchema = z.enum(['cpf', 'cnpj', 'email', 'phone', 'evp'], {
+  errorMap: () => ({ message: 'Tipo de chave PIX inválido' }),
+});
+
+export const updatePixKeySchema = z.object({
+  pixKeyType: pixKeyTypeSchema,
+  pixKey: z
+    .string()
+    .min(1, 'Chave PIX obrigatória')
+    .max(100, 'Máximo 100 caracteres'),
+}).refine(
+  (data) => {
+    const { pixKeyType, pixKey } = data;
+
+    switch (pixKeyType) {
+      case 'cpf':
+        return /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(pixKey);
+      case 'cnpj':
+        return /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(pixKey);
+      case 'email':
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pixKey);
+      case 'phone':
+        return /^\+?55?\s?\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/.test(pixKey);
+      case 'evp':
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pixKey);
+      default:
+        return false;
+    }
+  },
+  {
+    message: 'Chave PIX inválida para o tipo selecionado',
+    path: ['pixKey'],
+  }
+);
+
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
@@ -187,3 +223,5 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type AddressInput = z.infer<typeof addressSchema>;
 export type UpdateCreatorPersonalDataInput = z.infer<typeof updateCreatorPersonalDataSchema>;
 export type UpdateCreatorProfileInput = z.infer<typeof updateCreatorProfileSchema>;
+export type PixKeyType = z.infer<typeof pixKeyTypeSchema>;
+export type UpdatePixKeyInput = z.infer<typeof updatePixKeySchema>;

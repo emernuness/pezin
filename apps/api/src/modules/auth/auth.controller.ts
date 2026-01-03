@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Patch,
+  Delete,
   Body,
   Res,
   Req,
@@ -24,6 +25,8 @@ import {
   ChangePasswordInput,
   updateCreatorProfileSchema,
   UpdateCreatorProfileInput,
+  updatePixKeySchema,
+  UpdatePixKeyInput,
 } from '@pack-do-pezin/shared';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -189,5 +192,21 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute
   async resendVerificationEmail(@CurrentUser() user: any) {
     return this.authService.resendVerificationEmail(user.id);
+  }
+
+  // PIX Key Endpoints
+  @Patch('pix-key')
+  @UseGuards(JwtAuthGuard)
+  async updatePixKey(
+    @CurrentUser() user: any,
+    @Body(new ZodValidationPipe(updatePixKeySchema)) dto: UpdatePixKeyInput
+  ) {
+    return this.authService.updatePixKey(user.id, dto);
+  }
+
+  @Delete('pix-key')
+  @UseGuards(JwtAuthGuard)
+  async removePixKey(@CurrentUser() user: any) {
+    return this.authService.removePixKey(user.id);
   }
 }

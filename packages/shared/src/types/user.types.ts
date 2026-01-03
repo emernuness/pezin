@@ -1,3 +1,5 @@
+import type { PixKeyType } from '../schemas/auth.schema';
+
 export type UserType = 'creator' | 'consumer';
 
 export interface UserAddress {
@@ -21,7 +23,6 @@ export interface User {
   birthDate: Date | string;
   userType: UserType;
   emailVerified: boolean;
-  stripeConnected: boolean;
   createdAt: Date | string;
 
   // Personal data (for creators)
@@ -29,6 +30,10 @@ export interface User {
   cpf: string | null;
   phone: string | null;
   address: UserAddress | null;
+
+  // PIX key for payouts (creators)
+  pixKey: string | null;
+  pixKeyType: PixKeyType | null;
 }
 
 export interface AuthTokens {

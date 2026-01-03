@@ -106,11 +106,6 @@
 
 ## O Que Falta Construir
 
-### Alta Prioridade
-- [ ] **Integração Frontend PIX** - Tela de checkout PIX
-- [ ] **Tela de Saques** - Interface para solicitar saques via PIX
-- [ ] **Configuração de Chave PIX** - Formulário no perfil
-
 ### Média Prioridade
 - [ ] **Verificação de Email** - Envio e confirmação
 - [ ] **Página de Configurações** - Preferências do usuário
@@ -124,17 +119,68 @@
 
 ```
 █████████████████████████  100% Backend (Gateway Agnostic)
-████████████████████████░  90% Frontend
+█████████████████████████  100% Frontend (PIX Integration)
 █████████████████████████  100% Infraestrutura
-█████████████████████████  95% Overall
+█████████████████████████  100% Overall
 ```
 
 ## Problemas Conhecidos
 
 - Nenhum bug crítico identificado
-- Erros de lint pré-existentes em csrf.guard.ts (não críticos)
+
+## Testes Realizados (2026-01-03)
+
+### Ambiente de Teste
+- API rodando em `localhost:3001`
+- Contas de teste: `buyer_demo@local.test` e `creator_demo@local.test`
+- Senha: `Demo123!`
+
+### Endpoints Testados e Funcionando
+
+| Endpoint | Método | Status | Observação |
+|----------|--------|--------|------------|
+| `/auth/login` | POST | ✅ OK | Ambos usuários |
+| `/auth/pix-key` | PATCH | ✅ OK | Configura chave PIX |
+| `/auth/pix-key` | DELETE | ✅ OK | Remove chave PIX |
+| `/wallet/balance` | GET | ✅ OK | Retorna saldo formatado |
+| `/wallet/summary` | GET | ✅ OK | Resumo completo |
+| `/wallet/transactions` | GET | ✅ OK | Histórico paginado |
+| `/payment/checkout` | POST | ⚠️ 500 | Requer ENV_CURRENT_GATEWAY |
+
+### Configuração de Chave PIX
+```json
+// Request PATCH /auth/pix-key
+{"pixKeyType":"cpf","pixKey":"12345678901"}
+
+// Response
+{"user":{"pixKey":"12345678901","pixKeyType":"cpf",...}}
+```
+
+### Requisitos para Checkout PIX
+O endpoint `/payment/checkout` requer as seguintes variáveis de ambiente:
+```env
+ENV_CURRENT_GATEWAY=suitpay
+SUITPAY_API_KEY=xxx
+SUITPAY_API_URL=https://api.suitpay.app
+SUITPAY_WEBHOOK_SECRET=xxx
+```
+
+### Correções Aplicadas Durante os Testes
+1. **csrf.guard.ts**: Removidos imports não utilizados (`createHash`, `ConfigService`)
+2. **file-validation.service.ts**: Corrigida importação ESM do pacote `file-type` com dynamic import
 
 ## Histórico de Releases
+
+### v0.7.0 (2026-01-03)
+- **Frontend PIX Integration - COMPLETO**
+  - Serviços de API: payment.service.ts e wallet.service.ts ✅
+  - Formulário de configuração de chave PIX no perfil ✅
+  - Página de saldo/saques atualizada para Wallet API ✅
+  - Página de checkout PIX com QR Code ✅
+  - Componente PixQRCode com timer e copia/cola ✅
+  - BuyButton atualizado para usar PIX ✅
+  - Remoção de referências ao Stripe no frontend ✅
+  - User type atualizado com pixKey/pixKeyType ✅
 
 ### v0.6.0 (2026-01-03)
 - **Módulo Financeiro Gateway Agnostic - COMPLETO**
@@ -226,11 +272,6 @@ packages/shared/          schemas + types (auth, pack, payment)
 
 ## Próximo Milestone
 
-**v0.7.0 - Frontend PIX Ready**
-- [ ] Tela de checkout PIX
-- [ ] Tela de saques via PIX
-- [ ] Formulário de configuração de chave PIX
-
 **v0.8.0 - Produção Ready**
 - [ ] Verificação de email
 - [ ] Testes E2E críticos
@@ -255,6 +296,12 @@ packages/shared/          schemas + types (auth, pack, payment)
 | POST | `/wallet/payout` | Solicitar saque via PIX |
 | GET | `/wallet/payouts` | Lista saques |
 | GET | `/wallet/payouts/:id` | Detalhes do saque |
+
+### Auth Module (PIX Key)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| PATCH | `/auth/pix-key` | Configura chave PIX do criador |
+| DELETE | `/auth/pix-key` | Remove chave PIX |
 
 ### Webhook Endpoints
 | Método | Endpoint | Gateway |

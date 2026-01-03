@@ -5,7 +5,7 @@ import { formatDate } from "@/utils/formatters";
 interface AccountInfoCardProps {
   userType: "creator" | "consumer";
   emailVerified: boolean;
-  stripeConnected?: boolean;
+  pixKeyConfigured: boolean;
   hasCompleteData: boolean;
   birthDate?: string | Date | null;
   createdAt?: string | Date | null;
@@ -18,7 +18,7 @@ interface AccountInfoCardProps {
 export function AccountInfoCard({
   userType,
   emailVerified,
-  stripeConnected,
+  pixKeyConfigured,
   hasCompleteData,
   birthDate,
   createdAt,
@@ -67,9 +67,9 @@ export function AccountInfoCard({
         {isCreator && (
           <>
             <div className="flex justify-between py-2 border-b border-border">
-              <span className="text-muted-foreground">Stripe conectado</span>
+              <span className="text-muted-foreground">Chave PIX configurada</span>
               <span className="font-medium flex items-center gap-2">
-                {stripeConnected ? (
+                {pixKeyConfigured ? (
                   <>
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     Sim

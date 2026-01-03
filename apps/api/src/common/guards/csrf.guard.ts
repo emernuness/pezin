@@ -5,9 +5,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 
 /**
  * CSRF Guard using Double Submit Cookie pattern
@@ -27,7 +26,8 @@ export class CsrfGuard implements CanActivate {
   private readonly cookieName = 'XSRF-TOKEN';
   private readonly headerName = 'x-csrf-token';
 
-  constructor(private config: ConfigService) {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  constructor() {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();

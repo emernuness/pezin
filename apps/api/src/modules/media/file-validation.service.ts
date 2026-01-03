@@ -1,5 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { fileTypeFromBuffer } from 'file-type';
+
+// Dynamic import for ESM-only file-type package
+async function getFileType(buffer: Buffer) {
+  const { fileTypeFromBuffer } = await import('file-type');
+  return fileTypeFromBuffer(buffer);
+}
 
 /**
  * Service for validating file types using magic bytes (file signatures)
@@ -34,7 +39,7 @@ export class FileValidationService {
     context: 'image' | 'video'
   ): Promise<void> {
     // Check file signature (magic bytes)
-    const detectedType = await fileTypeFromBuffer(buffer);
+    const detectedType = await getFileType(buffer);
 
     if (!detectedType) {
       this.logger.warn(`Could not detect file type for declared: ${declaredMimeType}`);

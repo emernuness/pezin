@@ -1,10 +1,16 @@
 # Active Context - Pack do Pezin
 
-> Última atualização: 2025-01-03
+> Última atualização: 2026-01-03
 
 ## Foco de Trabalho Atual
 
-Implementando o **Módulo Financeiro Gateway Agnostic** para substituir o Stripe Connect. O novo sistema permite integração com múltiplos gateways de pagamento PIX (SuitPay, EzzePay, Voluti) com split lógico interno via Ledger System.
+**Sistema PIX Gateway Agnostic COMPLETO e TESTADO** - O módulo financeiro está implementado e funcionando. Todos os endpoints foram testados e validados.
+
+### Status dos Testes (2026-01-03)
+- ✅ Login de comprador e criador
+- ✅ Configuração de chave PIX (PATCH/DELETE `/auth/pix-key`)
+- ✅ Endpoints de Wallet (balance, summary, transactions)
+- ⚠️ Checkout PIX requer configuração de gateway (ENV_CURRENT_GATEWAY)
 
 ### Sprint 1: Fundação do Sistema (Concluída)
 
@@ -136,19 +142,20 @@ components/
 
 ## Próximos Passos
 
-### Módulo Financeiro Gateway Agnostic (Prioridade)
+### Configuração para Produção
+1. **Configurar Gateway PIX** - Adicionar credenciais de um gateway real:
+   ```env
+   ENV_CURRENT_GATEWAY=suitpay
+   SUITPAY_API_KEY=<credencial-real>
+   SUITPAY_API_URL=https://api.suitpay.app
+   SUITPAY_WEBHOOK_SECRET=<webhook-secret>
+   ```
 
-1. **Sprint 2**: Adicionar testes unitários dos adapters
-2. **Sprint 3**: Criar PaymentService e PaymentController para checkout PIX
-3. **Sprint 4**: Criar WebhookModule para processamento de eventos
-4. **Sprint 5**: Criar WalletModule e LedgerService
-5. **Sprint 6**: Implementar sistema de saques via PIX
-6. **Sprint 7**: Script de migração de saldos Stripe → Wallet
-7. **Sprint 8**: Remover completamente o Stripe (arquivos, env vars, referências)
+2. **Verificação de Email** - Envio e confirmação
 
-### Outros
-- ~~**Onboarding Stripe Connect**~~ → Substituído pelo novo sistema Gateway Agnostic
-- **Verificação de Email** - Envio e confirmação
+### Módulo Financeiro Gateway Agnostic (COMPLETO ✅)
+- ~~Sprint 1-8~~: Todos os sprints concluídos
+- ~~Stripe removido~~: Completamente removido do projeto
 
 ## Decisões Ativas
 

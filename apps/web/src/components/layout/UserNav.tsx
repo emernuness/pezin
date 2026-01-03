@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/auth.store";
 import {
-  CreditCard,
   LayoutDashboard,
   LogOut,
   Package,
@@ -134,22 +133,6 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-
-        {/* Stripe Connect status for creators */}
-        {isCreator && !user?.stripeConnected && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href="/app/dashboard/stripe-connect"
-                className="w-full cursor-pointer text-amber-600"
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Conectar Stripe</span>
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
 
         <DropdownMenuSeparator />
         <DropdownMenuItem

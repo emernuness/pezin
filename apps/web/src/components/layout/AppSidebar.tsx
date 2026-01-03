@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/auth.store";
 import {
-  CreditCard,
   ExternalLink,
   LayoutDashboard,
   Package,
@@ -32,7 +31,6 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   creatorOnly?: boolean;
-  showWhen?: (user: { stripeConnected: boolean }) => boolean;
 }
 
 const navItems: NavItem[] = [
@@ -55,13 +53,6 @@ const navItems: NavItem[] = [
     creatorOnly: true,
   },
   {
-    title: "Conectar Stripe",
-    href: "/app/dashboard/stripe-connect",
-    icon: CreditCard,
-    creatorOnly: true,
-    showWhen: (user) => !user.stripeConnected,
-  },
-  {
     title: "Minhas Compras",
     href: "/app/me/purchases",
     icon: ShoppingBag,
@@ -76,7 +67,6 @@ export function AppSidebar() {
 
   const filteredNavItems = navItems.filter((item) => {
     if (item.creatorOnly && !isCreator) return false;
-    if (item.showWhen && user && !item.showWhen(user)) return false;
     return true;
   });
 
