@@ -1,6 +1,6 @@
 # Progress - Pack do Pezin
 
-> Última atualização: 2025-01-02
+> Última atualização: 2025-01-03
 
 ## O Que Funciona
 
@@ -10,6 +10,7 @@
 - [x] Docker Compose para desenvolvimento
 - [x] Schema Prisma completo
 - [x] Sistema de Seed completo e idempotente
+- [x] **Módulo Financeiro Gateway Agnostic** - Sprint 1 concluída
 
 ### Backend (API)
 
@@ -42,6 +43,19 @@
 - [x] **Cloudflare Worker CDN** - URLs tokenizadas, R2 escondido do frontend
 - [x] **MediaToken Module** - JWT para acesso a mídia
 - [x] **InternalApiGuard** - Protege endpoints internos
+
+#### Módulo Financeiro Gateway Agnostic (Novo!)
+- [x] **Modelos Prisma**: Wallet, LedgerEntry, Payment, Payout, WebhookEvent
+- [x] **Campos User**: pixKey, pixKeyType
+- [x] **Interface IPaymentGateway**: Contrato para todos os gateways
+- [x] **Adapters**: SuitPay, EzzePay, Voluti
+- [x] **GatewayFactory**: Seleção de gateway via ENV_CURRENT_GATEWAY
+- [ ] PaymentService e PaymentController (Sprint 3)
+- [ ] WebhookModule (Sprint 4)
+- [ ] WalletModule e LedgerService (Sprint 5)
+- [ ] Payout via PIX (Sprint 6)
+- [ ] Migração de saldos Stripe (Sprint 7)
+- [ ] Remoção completa do Stripe (Sprint 8)
 
 ### Frontend (Web)
 
@@ -118,6 +132,18 @@
 
 ## Histórico de Releases
 
+### v0.5.0 (2025-01-03)
+- **Módulo Financeiro Gateway Agnostic - Sprint 1**
+  - Novos modelos Prisma: Wallet, LedgerEntry, Payment, Payout, WebhookEvent
+  - Novos enums: LedgerEntryType, TransactionType, PaymentStatus, PayoutStatus
+  - Campos pixKey e pixKeyType adicionados ao User
+  - Interface IPaymentGateway com tipos completos
+  - Adapters: SuitPayAdapter, EzzePayAdapter, VolutiAdapter
+  - GatewayFactory para seleção de gateway via ENV
+  - BaseGatewayAdapter com funcionalidades comuns
+  - Migration executada com sucesso
+  - Plano de implementação completo em 8 sprints
+
 ### v0.4.0 (2025-01-02)
 - **Cloudflare Worker CDN + R2 Security**
   - Nova estrutura de pastas: `users/{userId}/{username}/packs/{packId}/...`
@@ -185,9 +211,17 @@ packages/shared/          schemas + types
 
 ## Próximo Milestone
 
-**v0.5.0 - Produção Ready**
-- [x] ~~Testar conversão de mídia em produção~~ ✅
-- [x] ~~FFmpeg no Docker~~ ✅
-- [ ] Onboarding Stripe integrado
+**v0.6.0 - Módulo Financeiro Completo**
+- [x] Sprint 1: Modelos Prisma e Interface IPaymentGateway ✅
+- [x] Sprint 2: Adapters SuitPay, EzzePay, Voluti ✅
+- [ ] Sprint 3: PaymentService e PaymentController
+- [ ] Sprint 4: WebhookModule
+- [ ] Sprint 5: WalletModule e LedgerService
+- [ ] Sprint 6: Payout via PIX
+- [ ] Sprint 7: Migração de saldos Stripe
+- [ ] Sprint 8: Remoção completa do Stripe
+
+**v0.7.0 - Produção Ready**
 - [ ] Verificação de email
 - [ ] Testes E2E críticos
+- [ ] Deploy em produção

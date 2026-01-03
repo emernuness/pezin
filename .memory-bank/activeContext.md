@@ -1,10 +1,37 @@
 # Active Context - Pack do Pezin
 
-> Última atualização: 2025-01-02
+> Última atualização: 2025-01-03
 
 ## Foco de Trabalho Atual
 
-Implementamos a **reorganização do R2 + Cloudflare Worker para segurança de mídia**. Agora todos os arquivos são servidos via Worker com URLs tokenizadas, escondendo completamente a infraestrutura R2 do frontend.
+Implementando o **Módulo Financeiro Gateway Agnostic** para substituir o Stripe Connect. O novo sistema permite integração com múltiplos gateways de pagamento PIX (SuitPay, EzzePay, Voluti) com split lógico interno via Ledger System.
+
+### Sprint 1: Fundação do Sistema (Concluída)
+
+#### Novos Modelos Prisma
+- `Wallet` - Carteira virtual do criador (currentBalance, frozenBalance)
+- `LedgerEntry` - Livro razão para double-entry bookkeeping
+- `Payment` - Pagamentos via PIX (substitui Purchase para novos pagamentos)
+- `Payout` - Saques via PIX
+- `WebhookEvent` - Idempotência de webhooks genéricos
+
+#### Novos Enums
+- `LedgerEntryType` (CREDIT, DEBIT)
+- `TransactionType` (SALE, PLATFORM_FEE, PAYOUT, REFUND, ADJUSTMENT, RELEASE)
+- `PaymentStatus` (pending, paid, expired, cancelled, refunded)
+- `PayoutStatus` (pending, processing, completed, failed)
+
+#### Campos Adicionados no User
+- `pixKey` - Chave PIX para receber saques
+- `pixKeyType` - Tipo da chave (cpf, cnpj, email, phone, evp)
+
+#### Novos Módulos NestJS
+- `apps/api/src/modules/payment/` - Módulo principal
+  - `interfaces/payment-gateway.interface.ts` - Interface IPaymentGateway
+  - `adapters/suitpay.adapter.ts` - Adapter SuitPay
+  - `adapters/ezzepay.adapter.ts` - Adapter EzzePay
+  - `adapters/voluti.adapter.ts` - Adapter Voluti
+  - `factories/gateway.factory.ts` - Seleção de gateway via ENV
 
 ## Mudanças Recentes
 
@@ -109,12 +136,47 @@ components/
 
 ## Próximos Passos
 
-1. ~~**Testar fluxo completo** de upload com conversão~~ ✅ Testado com sucesso
-2. ~~**Verificar FFmpeg** no ambiente de produção~~ ✅ Adicionado ao Dockerfile
-3. **Onboarding Stripe Connect** - Fluxo no frontend
-4. **Verificação de Email** - Envio e confirmação
+### Módulo Financeiro Gateway Agnostic (Prioridade)
+
+1. **Sprint 2**: Adicionar testes unitários dos adapters
+2. **Sprint 3**: Criar PaymentService e PaymentController para checkout PIX
+3. **Sprint 4**: Criar WebhookModule para processamento de eventos
+4. **Sprint 5**: Criar WalletModule e LedgerService
+5. **Sprint 6**: Implementar sistema de saques via PIX
+6. **Sprint 7**: Script de migração de saldos Stripe → Wallet
+7. **Sprint 8**: Remover completamente o Stripe (arquivos, env vars, referências)
+
+### Outros
+- ~~**Onboarding Stripe Connect**~~ → Substituído pelo novo sistema Gateway Agnostic
+- **Verificação de Email** - Envio e confirmação
 
 ## Decisões Ativas
+
+### Módulo Financeiro Gateway Agnostic
+
+- **Decisão**: Substituir Stripe Connect por sistema próprio com gateways PIX brasileiros
+- **Motivo**: Stripe Connect não aceita conteúdo adult/high-risk no Brasil
+- **Padrão**: Adapter Pattern para trocar de gateway sem modificar código
+- **Gateways**: SuitPay, EzzePay, Voluti (todos os 3 adapters implementados)
+- **Ledger System**: Double-entry bookkeeping para split lógico 80/20
+- **Migração**: Saldos antigos do Stripe serão migrados para Wallets
+
+### Variáveis de Ambiente Novas
+```env
+ENV_CURRENT_GATEWAY=suitpay          # Gateway ativo
+SUITPAY_API_KEY=...
+SUITPAY_API_URL=https://api.suitpay.app
+SUITPAY_WEBHOOK_SECRET=...
+EZZEPAY_API_KEY=...
+EZZEPAY_API_URL=https://api.ezzepay.com.br
+EZZEPAY_WEBHOOK_SECRET=...
+VOLUTI_API_KEY=...
+VOLUTI_API_URL=https://api.voluti.com.br
+VOLUTI_WEBHOOK_SECRET=...
+PLATFORM_FEE_PERCENT=20
+ANTI_FRAUD_HOLD_DAYS=14
+MIN_PAYOUT_AMOUNT=5000
+```
 
 ### Conversão de Mídia
 - **Decisão**: Converter no backend após upload (não no frontend)
