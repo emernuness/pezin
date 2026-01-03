@@ -91,9 +91,6 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
-      stripe:
-        specifier: ^14.10.0
-        version: 14.25.0
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -7851,6 +7848,7 @@ packages:
     engines: {node: '>=0.6'}
     dependencies:
       side-channel: 1.1.0
+    dev: true
 
   /queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -8596,14 +8594,6 @@ packages:
     dependencies:
       js-tokens: 9.0.1
     dev: true
-
-  /stripe@14.25.0:
-    resolution: {integrity: sha512-wQS3GNMofCXwH8TSje8E1SE8zr6ODiGtHQgPtO95p9Mb4FhKC9jvXR2NUTpZ9ZINlckJcFidCmaTFV4P6vsb9g==}
-    engines: {node: '>=12.*'}
-    dependencies:
-      '@types/node': 20.19.27
-      qs: 6.14.1
-    dev: false
 
   /strnum@2.1.2:
     resolution: {integrity: sha512-l63NF9y/cLROq/yqKXSLtcMeeyOfnSQlfMSlzFt/K73oIaD8DGaQWd7Z34X9GPiKqP5rbSh84Hl4bOlLcjiSrQ==}

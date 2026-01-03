@@ -54,7 +54,6 @@
     "raw-body": "^2.5.2",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
-    "stripe": "^14.10.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

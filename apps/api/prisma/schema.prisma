@@ -92,10 +92,6 @@ model User {
   addressCity         String?
   addressState        String?
 
-  // Stripe Connect (for creators) - LEGACY
-  stripeAccountId String? @unique
-  stripeConnected Boolean @default(false)
-
   // PIX Key for receiving payouts (Gateway Agnostic)
   pixKey     String?
   pixKeyType String? // 'cpf', 'cnpj', 'email', 'phone', 'evp'
@@ -200,6 +196,11 @@ model PackFile {
   @@index([packId])
 }
 
+// ==========================================
+// LEGACY MODELS (Stripe) - Mantidos para histórico
+// ==========================================
+
+// Compras via Stripe (LEGACY - use Payment para novos)
 model Purchase {
   id        String         @id @default(cuid())
   userId    String
@@ -225,6 +226,7 @@ model Purchase {
   @@index([stripePaymentIntentId])
 }
 
+// Saques via Stripe Connect (LEGACY - use Payout para novos)
 model Withdrawal {
   id        String           @id @default(cuid())
   creatorId String
@@ -262,19 +264,6 @@ model DownloadLog {
 
   @@unique([userId, fileId, dateKey])
   @@index([userId, fileId, dateKey])
-}
-
-// Para idempotência de webhooks Stripe (LEGACY)
-model StripeEvent {
-  id          String   @id // Stripe event ID
-  type        String
-  processed   Boolean  @default(false)
-  processedAt DateTime?
-  payload     String   @db.Text // JSON do evento
-
-  createdAt DateTime @default(now())
-
-  @@index([id, processed])
 }
 
 // ==========================================

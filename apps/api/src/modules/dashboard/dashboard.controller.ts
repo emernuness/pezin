@@ -66,9 +66,9 @@ export class DashboardController {
       );
     }
 
-    if (!fullUser.stripeConnected) {
+    if (!fullUser.pixKey || !fullUser.pixKeyType) {
       throw new BadRequestException(
-        'Conecte sua conta Stripe antes de solicitar saques.'
+        'Configure sua chave PIX antes de solicitar saques.'
       );
     }
 
