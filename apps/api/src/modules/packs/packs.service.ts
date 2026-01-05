@@ -121,8 +121,19 @@ export class PacksService {
       throw new NotFoundException('Pack não encontrado');
     }
 
-    // Generate URLs for previews (uses API proxy in dev, Worker in prod)
-    const previewsWithUrls = pack.previews.map((preview) => {
+    // Get file storage keys to filter out linked previews
+    const fileStorageKeys = new Set(pack.files.map((f) => f.storageKey));
+
+    // Get preview storage keys to check which files are used as previews
+    const previewStorageKeys = new Set(pack.previews.map((p) => p.url));
+
+    // Filter previews to only include standalone ones (not linked to any file)
+    const standalonePreviews = pack.previews.filter(
+      (p) => !fileStorageKeys.has(p.url)
+    );
+
+    // Generate URLs for standalone previews (uses API proxy in dev, Worker in prod)
+    const previewsWithUrls = standalonePreviews.map((preview) => {
       // If it's already a full URL or data URL, return as is
       if (preview.url.startsWith('http') || preview.url.startsWith('data:')) {
         return preview;
@@ -150,7 +161,9 @@ export class PacksService {
         file.filename,
         file.mimeType
       );
-      return { ...file, previewUrl };
+      // Check if this file is being used as a preview
+      const isPreview = previewStorageKeys.has(file.storageKey);
+      return { ...file, previewUrl, isPreview };
     });
 
     return {
@@ -686,5 +699,106 @@ export class PacksService {
 
     this.logger.log(`Preview ${previewId} deleted from pack ${packId}`);
     return { deleted: true };
+  }
+
+  /**
+   * Toggle a file as preview
+   * When isPreview is true, creates a new preview from the file
+   * When isPreview is false, removes the preview created from the file
+   */
+  async toggleFileAsPreview(
+    packId: string,
+    fileId: string,
+    userId: string,
+    isPreview: boolean
+  ) {
+    // Verify pack ownership
+    const pack = await this.prisma.pack.findFirst({
+      where: { id: packId, creatorId: userId },
+    });
+
+    if (!pack) {
+      throw new ForbiddenException('Pack não encontrado ou você não é o criador');
+    }
+
+    // Only allow if pack is not published
+    if (pack.status === 'published') {
+      throw new BadRequestException(
+        'Não é possível alterar arquivos de um pack publicado. Despublique primeiro.'
+      );
+    }
+
+    // Get the file
+    const file = await this.prisma.packFile.findFirst({
+      where: { id: fileId, packId },
+    });
+
+    if (!file) {
+      throw new NotFoundException('Arquivo não encontrado');
+    }
+
+    // Only allow images to be set as previews
+    if (!file.mimeType.startsWith('image/')) {
+      throw new BadRequestException('Apenas imagens podem ser usadas como capa');
+    }
+
+    if (isPreview) {
+      // Check if already at max previews
+      const previewCount = await this.prisma.packPreview.count({
+        where: { packId },
+      });
+
+      if (previewCount >= this.MAX_PREVIEWS) {
+        throw new BadRequestException(
+          `Máximo de ${this.MAX_PREVIEWS} capas permitidas`
+        );
+      }
+
+      // Check if this file is already a preview (by checking if any preview has the same storageKey)
+      const existingPreview = await this.prisma.packPreview.findFirst({
+        where: {
+          packId,
+          url: file.storageKey,
+        },
+      });
+
+      if (existingPreview) {
+        throw new BadRequestException('Este arquivo já está sendo usado como capa');
+      }
+
+      // Create preview from file
+      const preview = await this.prisma.packPreview.create({
+        data: {
+          packId,
+          url: file.storageKey, // Reference the same storage key
+          order: previewCount,
+        },
+      });
+
+      this.logger.log(`File ${fileId} marked as preview for pack ${packId}`);
+      return { preview, isPreview: true };
+    } else {
+      // Find and remove the preview that references this file's storageKey
+      const existingPreview = await this.prisma.packPreview.findFirst({
+        where: {
+          packId,
+          url: file.storageKey,
+        },
+      });
+
+      if (!existingPreview) {
+        throw new BadRequestException('Este arquivo não está sendo usado como capa');
+      }
+
+      // Delete the preview (but not the storage - the file still uses it)
+      await this.prisma.packPreview.delete({
+        where: { id: existingPreview.id },
+      });
+
+      this.logger.log(
+        `File ${fileId} unmarked as preview for pack ${packId}`
+      );
+      return { isPreview: false };
+    }
   }
 }

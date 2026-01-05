@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PriceBreakdown } from "@/components/forms";
 import { api } from "@/services/api";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export default function NewPackPage() {
@@ -19,6 +20,14 @@ export default function NewPackPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("29,90");
+
+  // Calcula preco em centavos em tempo real para o breakdown
+  const priceInCents = useMemo(() => {
+    const parsed = Math.round(
+      Number.parseFloat(price.replace(",", ".")) * 100
+    );
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [price]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,19 +105,24 @@ export default function NewPackPage() {
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="price">Preco (R$) *</Label>
-          <Input
-            id="price"
-            type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="29,90"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Minimo R$ 9,90 - Maximo R$ 500,00
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="price">Preco (R$) *</Label>
+            <Input
+              id="price"
+              type="text"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="29,90"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Minimo R$ 9,90 - Maximo R$ 500,00
+            </p>
+          </div>
+
+          {/* Breakdown transparente das taxas */}
+          <PriceBreakdown priceInCents={priceInCents} />
         </div>
 
         <div className="rounded-lg border border-muted bg-muted/50 p-4">

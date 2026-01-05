@@ -153,4 +153,14 @@ export class PacksController {
   ) {
     return this.packsService.deletePreview(packId, previewId, user.id);
   }
+
+  @Patch(':packId/files/:fileId/toggle-preview')
+  async toggleFileAsPreview(
+    @Param('packId') packId: string,
+    @Param('fileId') fileId: string,
+    @Body('isPreview') isPreview: boolean,
+    @CurrentUser() user: any
+  ) {
+    return this.packsService.toggleFileAsPreview(packId, fileId, user.id, isPreview);
+  }
 }

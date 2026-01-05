@@ -71,7 +71,7 @@
 - [x] `components/cards/` - PackCard, CreatorCard, StatCard, ActivityCard
 - [x] `components/grids/` - PackGrid, GridSkeleton
 - [x] `components/tables/` - DataTable, TableSkeleton
-- [x] `components/forms/` - PasswordInput, FormField
+- [x] `components/forms/` - PasswordInput, FormField, PriceBreakdown, UploadProgressDialog, **PackMediaManager** (novo!)
 - [x] Páginas refatoradas com `_components/`
 - [x] Barrel exports em todas as pastas
 
@@ -91,6 +91,8 @@
 #### Sistema de Upload
 - [x] `useMediaUpload` hook - Multi-arquivo, progress, conversão
 - [x] `MediaUploader` component - Drag & drop, previews visuais
+- [x] `PackMediaManager` component - Unifica previews e arquivos em um card
+- [x] Toggle de preview (marcar arquivos como capa)
 - [x] Conversão WebP no browser (Canvas API)
 - [x] Progress tracking com XHR
 
@@ -302,6 +304,11 @@ packages/shared/          schemas + types (auth, pack, payment)
 |--------|----------|-----------|
 | PATCH | `/auth/pix-key` | Configura chave PIX do criador |
 | DELETE | `/auth/pix-key` | Remove chave PIX |
+
+### Packs Module (Toggle Preview)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| PATCH | `/packs/:packId/files/:fileId/toggle-preview` | Marca/desmarca arquivo como capa |
 
 ### Webhook Endpoints
 | Método | Endpoint | Gateway |

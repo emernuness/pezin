@@ -24,11 +24,22 @@ export const MAX_PACK_TITLE_LENGTH = 100;
 export const MIN_PACK_PRICE_CENTS = 990; // R$ 9,90
 export const MAX_PACK_PRICE_CENTS = 50000; // R$ 500,00
 
-// Financial
-export const PLATFORM_FEE_PERCENTAGE = 20;
-export const CREATOR_EARNINGS_PERCENTAGE = 80;
+// Financial - Fee Structure
+export const GATEWAY_FEE_PERCENTAGE = 5.99; // SuitPay PIX gateway fee
+export const PLATFORM_FEE_PERCENTAGE = 8; // Pack do Pezin platform fee
+export const TOTAL_FEE_PERCENTAGE =
+  GATEWAY_FEE_PERCENTAGE + PLATFORM_FEE_PERCENTAGE; // ~13.99%
+export const CREATOR_EARNINGS_PERCENTAGE = 100 - TOTAL_FEE_PERCENTAGE; // ~86.01%
 export const MIN_WITHDRAWAL_CENTS = 5000; // R$ 50,00
 export const HOLDING_PERIOD_DAYS = 14;
+
+// Fee descriptions for tooltips
+export const FEE_DESCRIPTIONS = {
+  gateway:
+    "Taxa cobrada pelo processador de pagamentos PIX (SuitPay) para processar transacoes de forma segura.",
+  platform:
+    "Taxa da plataforma Pack do Pezin para manutencao, suporte e melhorias continuas.",
+} as const;
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 12;

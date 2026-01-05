@@ -1,6 +1,6 @@
 # Pack do Pezin
 
-Plataforma de monetização de conteúdo adulto para criadores venderem packs (coleções de imagens/vídeos). Conecta criadores com consumidores através de um marketplace seguro com processamento de pagamentos via Stripe.
+Plataforma de monetização de conteúdo adulto para criadores venderem packs (coleções de imagens/vídeos). Conecta criadores com consumidores através de um marketplace seguro com processamento de pagamentos PIX via SuitPay.
 
 ## Stack Tecnológica
 
@@ -10,7 +10,7 @@ Plataforma de monetização de conteúdo adulto para criadores venderem packs (c
 | Backend | NestJS, TypeScript |
 | Database | PostgreSQL + Prisma ORM |
 | Storage | Cloudflare R2 (S3-compatible) |
-| Pagamentos | Stripe Checkout + Connect |
+| Pagamentos | PIX via SuitPay (gateway agnostic) |
 | UI | Tailwind CSS, shadcn/ui, React Bits |
 
 ## Estrutura do Monorepo
@@ -113,12 +113,12 @@ Após rodar o seeder (`pnpm db:seed`), as seguintes contas estarão disponíveis
 - Criação e gerenciamento de packs
 - Upload direto para cloud (presigned URLs)
 - Dashboard de vendas e métricas
-- Stripe Connect para recebimentos
+- Recebimentos via PIX
 - Sistema de saque com período anti-fraude de 14 dias
 
 ### Para Consumidores
 - Descoberta de packs por categorias
-- Compra segura via Stripe Checkout
+- Compra segura via PIX
 - Acesso permanente aos packs comprados
 - URLs de download com tempo limitado
 
@@ -155,7 +155,7 @@ pnpm worker:deploy    # Deploy do Worker
 - [x] Autenticação JWT com refresh token rotation
 - [x] Módulo de Packs (CRUD, publicação)
 - [x] Módulo de Purchases (compras, histórico)
-- [x] Integração Stripe (Checkout + Connect + Webhooks)
+- [x] Pagamento PIX (gateway agnostic: SuitPay, EzzePay, Voluti)
 - [x] Storage R2 (upload via presigned URLs)
 - [x] **Cloudflare Worker CDN** (URLs tokenizadas)
 - [x] **MediaToken Module** (JWT para mídia)
@@ -175,8 +175,7 @@ pnpm worker:deploy    # Deploy do Worker
 - [x] Componentes: PackCard, CreatorCard, FilterBar, BuyButton, Pagination
 
 ### Pendente
-- [ ] Onboarding Stripe Connect (fluxo completo)
-- [ ] Sistema de saques (Withdrawals)
+- [ ] Sistema de saques (Withdrawals via PIX)
 - [ ] Upload de arquivos no frontend
 - [ ] Verificação de email
 - [ ] Testes E2E completos

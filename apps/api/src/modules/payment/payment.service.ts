@@ -43,13 +43,14 @@ export interface PaymentStatusResult {
  *
  * Responsável por orquestrar o fluxo de checkout PIX:
  * 1. Validar pack e usuário
- * 2. Calcular fees (80/20)
+ * 2. Calcular fees (5.99% gateway + 8% plataforma = ~13.99% total)
  * 3. Gerar cobrança PIX via gateway
  * 4. Salvar Payment no banco
  */
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
+  private readonly gatewayFeePercent: number;
   private readonly platformFeePercent: number;
   private readonly antiFraudHoldDays: number;
   private readonly pixExpirationMinutes: number;
@@ -59,7 +60,8 @@ export class PaymentService {
     private readonly gatewayFactory: GatewayFactory,
     private readonly configService: ConfigService,
   ) {
-    this.platformFeePercent = this.configService.get<number>('PLATFORM_FEE_PERCENT') || 20;
+    this.gatewayFeePercent = this.configService.get<number>('GATEWAY_FEE_PERCENT') || 5.99;
+    this.platformFeePercent = this.configService.get<number>('PLATFORM_FEE_PERCENT') || 8;
     this.antiFraudHoldDays = this.configService.get<number>('ANTI_FRAUD_HOLD_DAYS') || 14;
     this.pixExpirationMinutes = this.configService.get<number>('PIX_EXPIRATION_MINUTES') || 60;
   }
@@ -167,10 +169,12 @@ export class PaymentService {
       throw new ConflictException('Você já comprou este pack');
     }
 
-    // 4. Calcular fees
+    // 4. Calcular fees (5.99% gateway + 8% plataforma)
     const amount = pack.price;
+    const gatewayFee = Math.round(amount * (this.gatewayFeePercent / 100));
     const platformFee = Math.round(amount * (this.platformFeePercent / 100));
-    const creatorEarnings = amount - platformFee;
+    const totalFees = gatewayFee + platformFee;
+    const creatorEarnings = amount - totalFees;
 
     // 5. Gerar cobrança PIX via gateway
     const gateway = this.gatewayFactory.getGateway();

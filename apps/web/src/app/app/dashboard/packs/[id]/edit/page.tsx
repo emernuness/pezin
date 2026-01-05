@@ -16,14 +16,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MediaUploader } from "@/components/forms";
+import {
+  PriceBreakdown,
+  UploadProgressDialog,
+  PackMediaManager,
+  type PackMediaManagerRef,
+  type UploadPhase,
+} from "@/components/forms";
 import { api } from "@/services/api";
-import { PLACEHOLDER_IMAGE_SVG } from "@/utils/constants";
-import { ArrowLeft, Trash2, X, FileVideo, FileImage, Play, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 interface EditPackPageProps {
@@ -38,6 +43,7 @@ interface PackFile {
   size: number;
   mimeType: string;
   previewUrl?: string;
+  isPreview?: boolean;
 }
 
 interface PackPreview {
@@ -70,7 +76,6 @@ export default function EditPackPage({ params }: EditPackPageProps) {
   const [pack, setPack] = useState<Pack | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
   const [deletingPack, setDeletingPack] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -83,6 +88,22 @@ export default function EditPackPage({ params }: EditPackPageProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItems, setLightboxItems] = useState<LightboxItem[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Upload refs and progress state
+  const mediaManagerRef = useRef<PackMediaManagerRef>(null);
+  const [pendingFilesCount, setPendingFilesCount] = useState(0);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<UploadPhase>("idle");
+  const [uploadTotalFiles, setUploadTotalFiles] = useState(0);
+  const [uploadedFilesCount, setUploadedFilesCount] = useState(0);
+
+  // Calcula preco em centavos em tempo real para o breakdown
+  const priceInCents = useMemo(() => {
+    const parsed = Math.round(
+      Number.parseFloat(price.replace(",", ".")) * 100
+    );
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [price]);
 
   // Refresh pack data
   const refreshPack = useCallback(async () => {
@@ -109,25 +130,89 @@ export default function EditPackPage({ params }: EditPackPageProps) {
   }, [params.id, router]);
 
   const handleSave = async () => {
-    setSaving(true);
+    const pendingItems = mediaManagerRef.current?.getPendingFiles() || [];
+    const totalPending = pendingItems.length;
+
+    // If there are pending files, show progress dialog
+    if (totalPending > 0) {
+      setUploadTotalFiles(totalPending);
+      setUploadedFilesCount(0);
+      setUploadPhase("uploading");
+      setUploadDialogOpen(true);
+
+      try {
+        let uploaded = 0;
+
+        await mediaManagerRef.current?.uploadAll(
+          async (file, type) => {
+            const { data } = await api.post(`/packs/${params.id}/upload-url`, {
+              filename: file.name,
+              contentType: file.type,
+              type,
+            });
+            return data;
+          },
+          async (data, type) => {
+            await api.post(`/packs/${params.id}/files`, { ...data, type });
+            uploaded++;
+            setUploadedFilesCount(uploaded);
+          }
+        );
+      } catch (error) {
+        setUploadPhase("error");
+        setTimeout(() => {
+          setUploadDialogOpen(false);
+          setUploadPhase("idle");
+        }, 2000);
+        return;
+      }
+    }
+
+    // Now save pack data
+    if (totalPending > 0) {
+      setUploadPhase("saving");
+    } else {
+      setSaving(true);
+    }
+
     try {
-      const priceInCents = Math.round(
+      const priceValue = Math.round(
         Number.parseFloat(price.replace(",", ".")) * 100
       );
 
       await api.patch(`/packs/${params.id}`, {
         title,
         description: description || undefined,
-        price: priceInCents,
+        price: priceValue,
       });
-
-      toast.success("Pack atualizado com sucesso!");
 
       // Refresh pack data
       const { data } = await api.get(`/packs/${params.id}`);
       setPack(data);
+
+      // Clear done files from uploader
+      mediaManagerRef.current?.clearDoneFiles();
+
+      if (totalPending > 0) {
+        setUploadPhase("done");
+        setTimeout(() => {
+          setUploadDialogOpen(false);
+          setUploadPhase("idle");
+          toast.success("Pack atualizado com sucesso!");
+        }, 1500);
+      } else {
+        toast.success("Pack atualizado com sucesso!");
+      }
     } catch {
-      toast.error("Erro ao salvar alteracoes");
+      if (totalPending > 0) {
+        setUploadPhase("error");
+        setTimeout(() => {
+          setUploadDialogOpen(false);
+          setUploadPhase("idle");
+        }, 2000);
+      } else {
+        toast.error("Erro ao salvar alteracoes");
+      }
     } finally {
       setSaving(false);
     }
@@ -184,58 +269,25 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     }
   };
 
-  // Upload handlers for MediaUploader
-  const handlePreviewUpload = useCallback(
-    async (file: File) => {
-      const { data } = await api.post(`/packs/${params.id}/upload-url`, {
-        filename: file.name,
-        contentType: file.type,
-        type: "preview",
-      });
-      return data;
+  // Handler for toggling preview status
+  const handleTogglePreview = useCallback(
+    async (fileId: string, isPreview: boolean) => {
+      try {
+        await api.patch(`/packs/${params.id}/files/${fileId}/toggle-preview`, {
+          isPreview,
+        });
+        toast.success(isPreview ? "Arquivo marcado como capa" : "Capa removida");
+        await refreshPack();
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        toast.error(axiosError.response?.data?.message || "Erro ao alterar capa");
+        throw error;
+      }
     },
-    [params.id]
+    [params.id, refreshPack]
   );
 
-  const handleFileUpload = useCallback(
-    async (file: File) => {
-      const { data } = await api.post(`/packs/${params.id}/upload-url`, {
-        filename: file.name,
-        contentType: file.type,
-        type: "file",
-      });
-      return data;
-    },
-    [params.id]
-  );
-
-  const handleUploadConfirm = useCallback(
-    async (
-      data: { fileId: string; key: string; filename: string; mimeType: string; size: number },
-      type: "preview" | "file"
-    ) => {
-      await api.post(`/packs/${params.id}/files`, {
-        ...data,
-        type,
-      });
-    },
-    [params.id]
-  );
-
-  const handlePreviewComplete = useCallback(() => {
-    refreshPack();
-    toast.success("Previews enviados com sucesso!");
-  }, [refreshPack]);
-
-  const handleFilesComplete = useCallback(() => {
-    refreshPack();
-    toast.success("Arquivos enviados com sucesso!");
-  }, [refreshPack]);
-
-  const handleDeleteFile = async (fileId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este arquivo?")) return;
-    setDeleting(fileId);
-
+  const handleDeleteFile = useCallback(async (fileId: string) => {
     try {
       await api.delete(`/packs/${params.id}/files/${fileId}`);
       toast.success("Arquivo excluido");
@@ -243,15 +295,11 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       toast.error(axiosError.response?.data?.message || "Erro ao excluir arquivo");
-    } finally {
-      setDeleting(null);
+      throw error;
     }
-  };
+  }, [params.id, refreshPack]);
 
-  const handleDeletePreview = async (previewId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este preview?")) return;
-    setDeleting(previewId);
-
+  const handleDeletePreview = useCallback(async (previewId: string) => {
     try {
       await api.delete(`/packs/${params.id}/previews/${previewId}`);
       toast.success("Preview excluido");
@@ -259,45 +307,9 @@ export default function EditPackPage({ params }: EditPackPageProps) {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       toast.error(axiosError.response?.data?.message || "Erro ao excluir preview");
-    } finally {
-      setDeleting(null);
+      throw error;
     }
-  };
-
-  const isImage = (mimeType: string) => mimeType.startsWith("image/");
-  const isVideo = (mimeType: string) => mimeType.startsWith("video/");
-
-  // Open lightbox with files
-  const openFileLightbox = (index: number) => {
-    if (!pack) return;
-    const items: LightboxItem[] = pack.files
-      .filter((f) => f.previewUrl)
-      .map((f) => ({
-        url: f.previewUrl!,
-        type: isVideo(f.mimeType) ? "video" : "image",
-        title: f.filename,
-      }));
-    if (items.length > 0) {
-      setLightboxItems(items);
-      setLightboxIndex(index);
-      setLightboxOpen(true);
-    }
-  };
-
-  // Open lightbox with previews
-  const openPreviewLightbox = (index: number) => {
-    if (!pack) return;
-    const items: LightboxItem[] = pack.previews.map((p) => ({
-      url: p.url,
-      type: "image" as const,
-      title: `Preview ${index + 1}`,
-    }));
-    if (items.length > 0) {
-      setLightboxItems(items);
-      setLightboxIndex(index);
-      setLightboxOpen(true);
-    }
-  };
+  }, [params.id, refreshPack]);
 
   const lightboxNext = () => {
     setLightboxIndex((i) => (i + 1) % lightboxItems.length);
@@ -386,9 +398,32 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           </div>
         </div>
       </div>
-
+      {/* Unified Media Manager */}
+      <PackMediaManager
+        ref={mediaManagerRef}
+        existingFiles={pack.files.map((f) => ({
+          id: f.id,
+          filename: f.filename,
+          size: f.size,
+          mimeType: f.mimeType,
+          previewUrl: f.previewUrl,
+          isPreview: f.isPreview || false,
+        }))}
+        existingPreviews={pack.previews}
+        maxPreviews={3}
+        onDeleteFile={handleDeleteFile}
+        onDeletePreview={handleDeletePreview}
+        onTogglePreview={handleTogglePreview}
+        onFilesChange={setPendingFilesCount}
+        onOpenLightbox={(index, items) => {
+          setLightboxItems(items);
+          setLightboxIndex(index);
+          setLightboxOpen(true);
+        }}
+        disabled={!canEdit}
+      />
       {/* Form Section */}
-      <div className="mb-8 space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="mt-8 space-y-6 rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground">
           Informacoes do Pack
         </h2>
@@ -420,223 +455,38 @@ export default function EditPackPage({ params }: EditPackPageProps) {
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="price">Preco (R$)</Label>
-            <Input
-              id="price"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="29,90"
-              disabled={!canEdit}
-            />
-            <p className="text-xs text-muted-foreground">
-              Minimo R$ 9,90 - Maximo R$ 500,00
-            </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Preco (R$)</Label>
+              <Input
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="29,90"
+                disabled={!canEdit}
+              />
+              <p className="text-xs text-muted-foreground">
+                Minimo R$ 9,90 - Maximo R$ 500,00
+              </p>
+            </div>
+
+            {/* Breakdown transparente das taxas */}
+            <PriceBreakdown priceInCents={priceInCents} />
           </div>
 
           {canEdit && (
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Salvando..." : "Salvar Alteracoes"}
-            </Button>
+            <div className="space-y-2">
+              <Button onClick={handleSave} disabled={saving} className="w-full">
+                {saving ? "Salvando..." : pendingFilesCount > 0
+                  ? `Enviar ${pendingFilesCount} arquivo(s) e Salvar`
+                  : "Salvar Alteracoes"}
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Previews and Files Grid */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Previews Section */}
-        <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
-          <div>
-            <h3 className="font-semibold text-foreground">
-              Previews (Capa) - {pack.previews.length}/3
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Imagens publicas. Sem nudez explicita.
-            </p>
-          </div>
 
-          {/* Existing previews */}
-          {pack.previews.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {pack.previews.map((preview, index) => (
-                <div
-                  key={preview.id}
-                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
-                  onClick={() => openPreviewLightbox(index)}
-                >
-                  <img
-                    src={preview.url || PLACEHOLDER_IMAGE_SVG}
-                    alt="Preview"
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                  {/* Zoom overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                    <ZoomIn className="h-6 w-6 text-white" />
-                  </div>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePreview(preview.id);
-                      }}
-                      disabled={deleting === preview.id}
-                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-                      title="Excluir preview"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Upload new previews */}
-          {pack.previews.length < 3 && canEdit && (
-            <MediaUploader
-              onUpload={handlePreviewUpload}
-              onConfirm={(data) => handleUploadConfirm(data, "preview")}
-              onComplete={handlePreviewComplete}
-              accept="image/jpeg,image/png,image/webp"
-              multiple={true}
-              maxFiles={3 - pack.previews.length}
-              maxFileSize={5 * 1024 * 1024}
-              convertToWebP={true}
-              showPreviews={true}
-              previewMode="grid"
-              label="Adicionar previews"
-              hint={`Máximo ${3 - pack.previews.length} imagem(ns). Convertidas para WebP.`}
-            />
-          )}
-
-          {!canEdit && pack.previews.length < 3 && (
-            <p className="text-xs text-gray-400">
-              Despublique o pack para adicionar mais previews.
-            </p>
-          )}
-        </div>
-
-        {/* Files Section */}
-        <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
-          <div>
-            <h3 className="font-semibold text-foreground">
-              Arquivos do Pack - {pack.files.length}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Conteudo exclusivo (Fotos/Videos). Minimo 3 arquivos.
-            </p>
-          </div>
-
-          {/* Existing files - Grid with thumbnails */}
-          {pack.files.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 max-h-80 overflow-y-auto">
-              {pack.files.map((file, index) => (
-                <div
-                  key={file.id}
-                  className="group relative aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
-                  onClick={() => file.previewUrl && openFileLightbox(index)}
-                >
-                  {/* Thumbnail */}
-                  {file.previewUrl ? (
-                    isVideo(file.mimeType) ? (
-                      <>
-                        <video
-                          src={file.previewUrl}
-                          className="h-full w-full object-cover"
-                          muted
-                          preload="metadata"
-                        />
-                        {/* Play icon overlay for videos */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="rounded-full bg-black/60 p-2">
-                            <Play className="h-6 w-6 text-white fill-white" />
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <img
-                        src={file.previewUrl}
-                        alt={file.filename}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    )
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      {isImage(file.mimeType) ? (
-                        <FileImage className="h-8 w-8 text-muted-foreground" />
-                      ) : (
-                        <FileVideo className="h-8 w-8 text-muted-foreground" />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Hover overlay with zoom icon */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                    <ZoomIn className="h-6 w-6 text-white" />
-                  </div>
-
-                  {/* File info at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <p className="truncate text-xs text-white font-medium">
-                      {file.filename}
-                    </p>
-                    <p className="text-xs text-white/70">
-                      {(file.size / 1024 / 1024).toFixed(1)} MB
-                    </p>
-                  </div>
-
-                  {/* Delete button */}
-                  {canEdit && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFile(file.id);
-                      }}
-                      disabled={deleting === file.id}
-                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10"
-                      title="Excluir arquivo"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {pack.files.length === 0 && (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Nenhum arquivo adicionado ainda.
-            </p>
-          )}
-
-          {/* Upload new files */}
-          {canEdit && (
-            <MediaUploader
-              onUpload={handleFileUpload}
-              onConfirm={(data) => handleUploadConfirm(data, "file")}
-              onComplete={handleFilesComplete}
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
-              multiple={true}
-              maxFiles={50 - pack.files.length}
-              maxFileSize={100 * 1024 * 1024}
-              convertToWebP={true}
-              showPreviews={true}
-              previewMode="list"
-              label="Adicionar arquivos"
-              hint="Fotos e vídeos. Imagens convertidas para WebP."
-            />
-          )}
-
-          {!canEdit && (
-            <p className="text-xs text-gray-400">
-              Despublique o pack para modificar arquivos.
-            </p>
-          )}
-        </div>
-      </div>
 
       {/* Publishing Requirements */}
       {pack.status === "draft" && (
@@ -781,6 +631,14 @@ export default function EditPackPage({ params }: EditPackPageProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Upload Progress Dialog */}
+      <UploadProgressDialog
+        open={uploadDialogOpen}
+        phase={uploadPhase}
+        totalFiles={uploadTotalFiles}
+        uploadedFiles={uploadedFilesCount}
+      />
     </div>
   );
 }

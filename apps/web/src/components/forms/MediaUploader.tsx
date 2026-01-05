@@ -1,11 +1,30 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useImperativeHandle, forwardRef, useEffect } from "react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Upload, X, FileImage, FileVideo, Check, AlertCircle, Loader2 } from "lucide-react";
+
+export interface PendingFile {
+  id: string;
+  file: File;
+  preview: string;
+  progress: number;
+  status: "pending" | "converting" | "uploading" | "done" | "error";
+  error?: string;
+}
+
+export interface MediaUploaderRef {
+  getPendingFiles: () => PendingFile[];
+  uploadAll: (
+    getUploadUrl: (file: File) => Promise<{ uploadUrl: string; key: string; fileId: string }>,
+    onConfirm: (data: { fileId: string; key: string; filename: string; mimeType: string; size: number }) => Promise<void>
+  ) => Promise<void>;
+  clearDoneFiles: () => void;
+  isUploading: boolean;
+}
 
 interface MediaUploaderProps {
   onUpload: (
@@ -19,6 +38,7 @@ interface MediaUploaderProps {
     size: number;
   }) => Promise<void>;
   onComplete?: () => void;
+  onFilesChange?: (pendingCount: number) => void;
   accept?: string;
   multiple?: boolean;
   maxFiles?: number;
@@ -30,42 +50,73 @@ interface MediaUploaderProps {
   disabled?: boolean;
   label?: string;
   hint?: string;
+  /** When true, hides the upload button - parent controls upload via ref */
+  deferUpload?: boolean;
 }
 
 /**
  * Reusable media uploader component with WebP conversion and visual previews.
+ * Supports deferred upload mode where parent controls when uploads happen.
  */
-export function MediaUploader({
-  onUpload,
-  onConfirm,
-  onComplete,
-  accept = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm",
-  multiple = true,
-  maxFiles = 50,
-  maxFileSize = 100 * 1024 * 1024,
-  convertToWebP = true,
-  showPreviews = true,
-  previewMode = "grid",
-  className,
-  disabled = false,
-  label = "Adicionar arquivos",
-  hint,
-}: MediaUploaderProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(
+  function MediaUploader(
+    {
+      onUpload,
+      onConfirm,
+      onComplete,
+      onFilesChange,
+      accept = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm",
+      multiple = true,
+      maxFiles = 50,
+      maxFileSize = 100 * 1024 * 1024,
+      convertToWebP = true,
+      showPreviews = true,
+      previewMode = "grid",
+      className,
+      disabled = false,
+      label = "Adicionar arquivos",
+      hint,
+      deferUpload = false,
+    },
+    ref
+  ) {
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    files,
-    addFiles,
-    removeFile,
-    clearFiles,
-    uploadFile,
-    isUploading,
-  } = useMediaUpload({
-    maxFiles,
-    maxFileSize,
-    convertToWebP,
-    allowedTypes: accept.split(",").map((t) => t.trim()),
-  });
+    const {
+      files,
+      addFiles,
+      removeFile,
+      clearFiles,
+      uploadFile,
+      uploadAll,
+      isUploading,
+    } = useMediaUpload({
+      maxFiles,
+      maxFileSize,
+      convertToWebP,
+      allowedTypes: accept.split(",").map((t) => t.trim()),
+    });
+
+    // Expose methods to parent via ref
+    useImperativeHandle(ref, () => ({
+      getPendingFiles: () => files.filter((f) => f.status === "pending"),
+      uploadAll: async (getUploadUrl, confirmFn) => {
+        await uploadAll(getUploadUrl, confirmFn);
+      },
+      clearDoneFiles: () => {
+        const doneFiles = files.filter((f) => f.status === "done");
+        doneFiles.forEach((f) => removeFile(f.id));
+      },
+      isUploading,
+    }), [files, uploadAll, removeFile, isUploading]);
+
+    // Calculate pending count
+    const pendingCount = files.filter((f) => f.status === "pending").length;
+
+    // Notify parent when pending files change (in useEffect to avoid setState during render)
+    useEffect(() => {
+      onFilesChange?.(pendingCount);
+    }, [pendingCount, onFilesChange]);
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +160,6 @@ export function MediaUploader({
     onComplete?.();
   }, [files, uploadFile, onUpload, onConfirm, onComplete]);
 
-  const pendingCount = files.filter((f) => f.status === "pending").length;
   const uploadingCount = files.filter((f) => f.status === "uploading").length;
   const doneCount = files.filter((f) => f.status === "done").length;
 
@@ -309,8 +359,8 @@ export function MediaUploader({
             </div>
           )}
 
-          {/* Upload button */}
-          {pendingCount > 0 && (
+          {/* Upload button - only shown when not in deferred mode */}
+          {pendingCount > 0 && !deferUpload && (
             <Button
               onClick={handleUploadAll}
               disabled={isUploading}
@@ -329,8 +379,15 @@ export function MediaUploader({
               )}
             </Button>
           )}
+
+          {/* Pending indicator for deferred mode */}
+          {pendingCount > 0 && deferUpload && (
+            <p className="text-xs text-muted-foreground text-center">
+              {pendingCount} arquivo(s) serao enviados ao salvar
+            </p>
+          )}
         </div>
       )}
     </div>
   );
-}
+});

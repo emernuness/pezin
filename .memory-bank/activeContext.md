@@ -6,6 +6,47 @@
 
 **Sistema PIX Gateway Agnostic COMPLETO e TESTADO** - O módulo financeiro está implementado e funcionando. Todos os endpoints foram testados e validados.
 
+### Atualização de Taxas e Transparência (2026-01-03)
+
+Nova estrutura de taxas implementada com transparência total para criadores:
+
+| Taxa | Porcentagem | Descrição |
+|------|-------------|-----------|
+| Gateway (SuitPay) | 5,99% | Taxa do processador de pagamentos PIX |
+| Plataforma | 8,00% | Taxa da plataforma Pack do Pezin |
+| **Total** | **~13,99%** | |
+| **Criador recebe** | **~86,01%** | |
+
+**Novo componente `PriceBreakdown`:**
+- Localização: `apps/web/src/components/forms/PriceBreakdown.tsx`
+- Mostra breakdown transparente das taxas em tempo real
+- Ícones de info (i) com tooltips explicando cada taxa
+- Integrado nas páginas de criação e edição de pack
+- Usa design system Neon Lime (accent para "Você Recebe")
+
+**Refatoração do Upload de Arquivos (2026-01-03):**
+- `MediaUploader` agora suporta modo `deferUpload` onde uploads são controlados pelo parent
+- Novo componente `UploadProgressDialog` mostra progresso visual durante operações
+- Página de edição de pack refatorada:
+  - Usuário seleciona arquivos (ficam em preview)
+  - Ao clicar "Salvar Alterações", todos os arquivos são enviados
+  - Dialog de progresso mostra fase atual (enviando/salvando/concluído)
+  - Experiência mais intuitiva e sem botões de upload confusos
+
+**Componente Unificado de Mídia (2026-01-03):**
+- Novo componente `PackMediaManager` unifica previews e arquivos em um só card
+- Localização: `apps/web/src/components/forms/PackMediaManager.tsx`
+- Funcionalidades:
+  - Grade única para todas as mídias (previews standalone + arquivos)
+  - Ícone de estrela para marcar imagens como capa (máximo 3)
+  - Toggle de preview via clique na estrela
+  - Upload com deferred mode (envia ao salvar)
+  - Suporta drag & drop
+- Backend:
+  - Novo endpoint `PATCH /packs/:packId/files/:fileId/toggle-preview`
+  - Campo `isPreview` adicionado aos arquivos retornados
+  - Previews linkados a arquivos são filtrados (evita duplicatas)
+
 ### Status dos Testes (2026-01-03)
 - ✅ Login de comprador e criador
 - ✅ Configuração de chave PIX (PATCH/DELETE `/auth/pix-key`)
@@ -180,7 +221,8 @@ EZZEPAY_WEBHOOK_SECRET=...
 VOLUTI_API_KEY=...
 VOLUTI_API_URL=https://api.voluti.com.br
 VOLUTI_WEBHOOK_SECRET=...
-PLATFORM_FEE_PERCENT=20
+GATEWAY_FEE_PERCENT=5.99
+PLATFORM_FEE_PERCENT=8
 ANTI_FRAUD_HOLD_DAYS=14
 MIN_PAYOUT_AMOUNT=5000
 ```
